@@ -110,7 +110,7 @@ const RoomDetail = () => {
             </div>
 
             <div className="text-3xl font-bold text-primary font-sans">
-              ${room.base_price} <span className="text-sm font-normal text-muted-foreground">/ night</span>
+              RWF {Number(room.base_price).toLocaleString()} <span className="text-sm font-normal text-muted-foreground">/ night</span>
             </div>
 
             {/* Booking form */}
@@ -138,11 +138,11 @@ const RoomDetail = () => {
               </div>
               {nights > 0 && (
                 <div className="bg-muted rounded-lg p-3 text-sm font-sans">
-                  <div className="flex justify-between"><span className="text-muted-foreground">{nights} night{nights > 1 ? "s" : ""} × ${room.base_price}</span><span className="font-semibold text-foreground">${(nights * Number(room.base_price)).toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">{nights} night{nights > 1 ? "s" : ""} × RWF {Number(room.base_price).toLocaleString()}</span><span className="font-semibold text-foreground">RWF {(nights * Number(room.base_price)).toLocaleString()}</span></div>
                 </div>
               )}
               <Button onClick={handleBook} disabled={booking || nights <= 0} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans tracking-wide py-5">
-                {booking ? "Booking..." : nights > 0 ? `Book Now — $${(nights * Number(room.base_price)).toFixed(2)}` : "Select Dates"}
+                {booking ? "Booking..." : nights > 0 ? `Book Now — RWF ${(nights * Number(room.base_price)).toLocaleString()}` : "Select Dates"}
               </Button>
             </div>
           </motion.div>

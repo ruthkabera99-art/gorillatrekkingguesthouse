@@ -71,7 +71,7 @@ const Rooms = () => {
                     </div>
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <span className="text-2xl font-bold text-primary font-sans">${room.base_price}</span>
+                        <span className="text-xl font-bold text-primary font-sans">RWF {Number(room.base_price).toLocaleString()}</span>
                         <span className="text-xs text-muted-foreground font-sans"> / night</span>
                       </div>
                       <div className="flex items-center gap-1 text-muted-foreground">

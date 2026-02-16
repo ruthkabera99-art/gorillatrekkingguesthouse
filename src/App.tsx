@@ -11,6 +11,9 @@ import ResetPassword from "./pages/ResetPassword";
 import Rooms from "./pages/Rooms";
 import RoomDetail from "./pages/RoomDetail";
 import Dashboard from "./pages/Dashboard";
+import Menu from "./pages/Menu";
+import KitchenDashboard from "./pages/KitchenDashboard";
+import BarDashboard from "./pages/BarDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +33,9 @@ const App = () => (
             <Route path="/rooms" element={<Rooms />} />
             <Route path="/rooms/:id" element={<RoomDetail />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/menu" element={<Menu />} />
+            <Route path="/kitchen" element={<KitchenDashboard />} />
+            <Route path="/bar" element={<BarDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

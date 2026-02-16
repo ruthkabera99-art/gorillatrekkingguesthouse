@@ -70,6 +70,135 @@ export type Database = {
           },
         ]
       }
+      order_items: {
+        Row: {
+          created_at: string
+          department: Database["public"]["Enums"]["product_department"]
+          id: string
+          note: string | null
+          order_id: string
+          product_id: string
+          quantity: number
+          status: Database["public"]["Enums"]["order_item_status"]
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          department: Database["public"]["Enums"]["product_department"]
+          id?: string
+          note?: string | null
+          order_id: string
+          product_id: string
+          quantity?: number
+          status?: Database["public"]["Enums"]["order_item_status"]
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          department?: Database["public"]["Enums"]["product_department"]
+          id?: string
+          note?: string | null
+          order_id?: string
+          product_id?: string
+          quantity?: number
+          status?: Database["public"]["Enums"]["order_item_status"]
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          payment_status: Database["public"]["Enums"]["order_payment_status"]
+          source_id: string
+          source_type: Database["public"]["Enums"]["order_source_type"]
+          status: Database["public"]["Enums"]["order_status"]
+          total: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["order_payment_status"]
+          source_id: string
+          source_type: Database["public"]["Enums"]["order_source_type"]
+          status?: Database["public"]["Enums"]["order_status"]
+          total?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_status?: Database["public"]["Enums"]["order_payment_status"]
+          source_id?: string
+          source_type?: Database["public"]["Enums"]["order_source_type"]
+          status?: Database["public"]["Enums"]["order_status"]
+          total?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          available: boolean
+          category: Database["public"]["Enums"]["product_category"]
+          created_at: string
+          department: Database["public"]["Enums"]["product_department"]
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean
+          category: Database["public"]["Enums"]["product_category"]
+          created_at?: string
+          department: Database["public"]["Enums"]["product_department"]
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean
+          category?: Database["public"]["Enums"]["product_category"]
+          created_at?: string
+          department?: Database["public"]["Enums"]["product_department"]
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -130,6 +259,30 @@ export type Database = {
           id?: string
           valid_from?: string
           valid_to?: string
+        }
+        Relationships: []
+      }
+      restaurant_tables: {
+        Row: {
+          capacity: number
+          created_at: string
+          id: string
+          status: string
+          table_number: number
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          status?: string
+          table_number: number
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          status?: string
+          table_number?: number
         }
         Relationships: []
       }
@@ -254,6 +407,32 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
+      order_item_status:
+        | "pending"
+        | "preparing"
+        | "ready"
+        | "delivered"
+        | "cancelled"
+      order_payment_status: "unpaid" | "paid" | "charged_to_room"
+      order_source_type: "room" | "table"
+      order_status:
+        | "pending"
+        | "preparing"
+        | "ready"
+        | "delivered"
+        | "cancelled"
+      product_category:
+        | "appetizer"
+        | "main_course"
+        | "dessert"
+        | "side"
+        | "soft_drink"
+        | "beer"
+        | "wine"
+        | "cocktail"
+        | "spirit"
+        | "hot_beverage"
+      product_department: "kitchen" | "bar"
       room_type: "standard" | "deluxe" | "executive" | "presidential"
     }
     CompositeTypes: {
@@ -384,6 +563,29 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       booking_status: ["pending", "confirmed", "cancelled", "completed"],
+      order_item_status: [
+        "pending",
+        "preparing",
+        "ready",
+        "delivered",
+        "cancelled",
+      ],
+      order_payment_status: ["unpaid", "paid", "charged_to_room"],
+      order_source_type: ["room", "table"],
+      order_status: ["pending", "preparing", "ready", "delivered", "cancelled"],
+      product_category: [
+        "appetizer",
+        "main_course",
+        "dessert",
+        "side",
+        "soft_drink",
+        "beer",
+        "wine",
+        "cocktail",
+        "spirit",
+        "hot_beverage",
+      ],
+      product_department: ["kitchen", "bar"],
       room_type: ["standard", "deluxe", "executive", "presidential"],
     },
   },

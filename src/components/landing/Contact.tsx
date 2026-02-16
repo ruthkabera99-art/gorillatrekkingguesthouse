@@ -33,10 +33,10 @@ const Contact = () => {
           >
             <div className="space-y-6 mb-8">
               {[
-                { icon: MapPin, text: "123 Luxury Avenue, Beverly Hills, CA 90210" },
-                { icon: Phone, text: "+1 (555) 123-4567" },
-                { icon: Mail, text: "reservations@aurumhotels.com" },
-                { icon: Clock, text: "24/7 Concierge Service" },
+                { icon: MapPin, text: "Musanze, Rwanda — Near Volcanoes National Park" },
+                { icon: Phone, text: "+250 788 000 000" },
+                { icon: Mail, text: "info@gorillatrekkingguesthouse.com" },
+                { icon: Clock, text: "24/7 Front Desk Service" },
               ].map((item) => (
                 <div key={item.text} className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">

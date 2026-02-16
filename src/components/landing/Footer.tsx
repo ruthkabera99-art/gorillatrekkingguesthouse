@@ -9,9 +9,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand */}
           <div>
-            <h3 className="font-serif text-2xl font-bold text-primary mb-4">AURUM</h3>
+            <h3 className="font-serif text-xl font-bold text-primary mb-4">GORILLA TREKKING<span className="block text-sm tracking-[0.15em]">GUEST HOUSE</span></h3>
             <p className="text-sm text-secondary-foreground/70 font-sans leading-relaxed">
-              Where luxury meets timeless elegance. Experience world-class hospitality at its finest.
+              Authentic Rwandan hospitality in the heart of gorilla country. Your gateway to unforgettable trekking adventures.
             </p>
           </div>
 
@@ -73,7 +73,7 @@ const Footer = () => {
 
         <div className="border-t border-secondary-foreground/10 mt-12 pt-8 text-center">
           <p className="text-sm text-secondary-foreground/50 font-sans">
-            © {new Date().getFullYear()} Aurum Hotels. All rights reserved.
+            © {new Date().getFullYear()} Gorilla Trekking Guest House. All rights reserved.
           </p>
         </div>
       </div>
