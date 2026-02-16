@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 const rooms = [
   {
     type: "Standard",
-    price: 199,
+    price: 45000,
     image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&q=80",
     capacity: 2,
     rating: 4.5,
@@ -15,7 +15,7 @@ const rooms = [
   },
   {
     type: "Deluxe",
-    price: 349,
+    price: 75000,
     image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80",
     capacity: 2,
     rating: 4.7,
@@ -23,7 +23,7 @@ const rooms = [
   },
   {
     type: "Executive",
-    price: 549,
+    price: 120000,
     image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80",
     capacity: 3,
     rating: 4.8,
@@ -31,7 +31,7 @@ const rooms = [
   },
   {
     type: "Presidential Suite",
-    price: 1299,
+    price: 250000,
     image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80",
     capacity: 4,
     rating: 4.9,
@@ -100,7 +100,7 @@ const RoomShowcase = () => {
                   </p>
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-2xl font-bold text-primary font-sans">${room.price}</span>
+                      <span className="text-xl font-bold text-primary font-sans">RWF {room.price.toLocaleString()}</span>
                       <span className="text-xs text-muted-foreground font-sans"> / night</span>
                     </div>
                     <div className="flex items-center gap-1 text-muted-foreground">

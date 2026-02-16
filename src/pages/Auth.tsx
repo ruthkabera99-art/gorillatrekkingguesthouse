@@ -62,7 +62,7 @@ const Auth = () => {
           </button>
 
           <div className="text-center mb-8">
-            <h1 className="font-serif text-3xl font-bold text-primary mb-2">AURUM</h1>
+            <h1 className="font-serif text-2xl font-bold text-primary mb-2">GORILLA TREKKING<span className="block text-sm tracking-[0.15em]">GUEST HOUSE</span></h1>
             <p className="text-muted-foreground font-sans text-sm">
               {isLogin ? "Welcome back. Sign in to continue." : "Create your account to get started."}
             </p>

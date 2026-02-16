@@ -12,14 +12,14 @@ const Hero = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
       <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
         <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="text-sm md:text-base tracking-[0.3em] uppercase text-white/70 font-sans mb-4">
-          Welcome to Aurum Hotels
+          Welcome to
         </motion.p>
         <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.8 }} className="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white leading-tight mb-6">
-          Where Luxury Meets
-          <span className="block text-gradient-gold">Timeless Elegance</span>
+          Gorilla Trekking
+          <span className="block text-gradient-gold">Guest House</span>
         </motion.h1>
         <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.8 }} className="text-lg md:text-xl text-white/80 font-sans font-light max-w-2xl mx-auto mb-10">
-          Experience world-class hospitality, breathtaking views, and unforgettable moments crafted just for you.
+          Experience authentic Rwandan hospitality, breathtaking mountain views, and unforgettable gorilla trekking adventures.
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.8 }} className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link to="/rooms">

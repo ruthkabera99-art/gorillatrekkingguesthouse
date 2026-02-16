@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { label: "Rooms", href: "#rooms" },
+  { label: "Menu", href: "/menu", isRoute: true },
   { label: "Amenities", href: "#amenities" },
   { label: "Reviews", href: "#reviews" },
   { label: "Contact", href: "#contact" },
@@ -38,11 +39,15 @@ const Navbar = () => {
       }`}
     >
       <nav className="container mx-auto flex items-center justify-between px-6 py-4">
-        <Link to="/" className="font-serif text-2xl font-bold tracking-wider text-primary">AURUM</Link>
+        <Link to="/" className="font-serif text-lg md:text-xl font-bold tracking-wider text-primary leading-tight">GORILLA TREKKING<span className="block text-xs tracking-[0.2em]">GUEST HOUSE</span></Link>
 
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((l) => (
-            <a key={l.label} href={l.href} className="text-sm font-medium tracking-wide text-foreground/80 hover:text-primary transition-colors">{l.label}</a>
+            "isRoute" in l && l.isRoute ? (
+              <Link key={l.label} to={l.href} className="text-sm font-medium tracking-wide text-foreground/80 hover:text-primary transition-colors">{l.label}</Link>
+            ) : (
+              <a key={l.label} href={l.href} className="text-sm font-medium tracking-wide text-foreground/80 hover:text-primary transition-colors">{l.label}</a>
+            )
           ))}
           <button onClick={() => setDark(!dark)} className="p-2 rounded-full hover:bg-muted transition-colors text-foreground/70" aria-label="Toggle theme">
             {dark ? <Sun size={18} /> : <Moon size={18} />}
@@ -82,7 +87,11 @@ const Navbar = () => {
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="md:hidden bg-card/95 backdrop-blur-lg border-b border-border">
             <div className="flex flex-col items-center gap-4 py-6">
               {navLinks.map((l) => (
-                <a key={l.label} href={l.href} onClick={() => setMobileOpen(false)} className="text-sm font-medium tracking-wide text-foreground/80 hover:text-primary transition-colors">{l.label}</a>
+                "isRoute" in l && l.isRoute ? (
+                  <Link key={l.label} to={l.href} onClick={() => setMobileOpen(false)} className="text-sm font-medium tracking-wide text-foreground/80 hover:text-primary transition-colors">{l.label}</Link>
+                ) : (
+                  <a key={l.label} href={l.href} onClick={() => setMobileOpen(false)} className="text-sm font-medium tracking-wide text-foreground/80 hover:text-primary transition-colors">{l.label}</a>
+                )
               ))}
               {user ? (
                 <Link to="/dashboard" onClick={() => setMobileOpen(false)}>

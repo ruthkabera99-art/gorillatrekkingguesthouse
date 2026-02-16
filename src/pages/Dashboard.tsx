@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, LogOut, Calendar, User } from "lucide-react";
+import { ArrowLeft, LogOut, Calendar, User, UtensilsCrossed, ChefHat, Wine } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -80,6 +81,25 @@ const Dashboard = () => {
           </Card>
         </div>
 
+        {/* Quick Actions */}
+        <div className="flex flex-wrap gap-3 mb-10">
+          <Link to="/menu">
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90 font-sans gap-2">
+              <UtensilsCrossed size={16} /> Order Food & Drinks
+            </Button>
+          </Link>
+          <Link to="/kitchen">
+            <Button variant="outline" className="font-sans gap-2">
+              <ChefHat size={16} /> Kitchen
+            </Button>
+          </Link>
+          <Link to="/bar">
+            <Button variant="outline" className="font-sans gap-2">
+              <Wine size={16} /> Bar
+            </Button>
+          </Link>
+        </div>
+
         {/* Bookings */}
         <h2 className="font-serif text-xl font-semibold text-foreground mb-4">My Bookings</h2>
         {bookings.length === 0 ? (
@@ -102,7 +122,7 @@ const Dashboard = () => {
                       <p className="text-xs text-muted-foreground font-sans">{b.guests_adults} adults, {b.guests_children} children</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-primary font-sans">${b.total_price}</p>
+                      <p className="text-lg font-bold text-primary font-sans">RWF {Number(b.total_price).toLocaleString()}</p>
                       <span className={`text-xs font-sans px-2 py-1 rounded-full capitalize ${
                         b.status === 'confirmed' ? 'bg-green-100 text-green-700' :
                         b.status === 'cancelled' ? 'bg-red-100 text-red-700' :
