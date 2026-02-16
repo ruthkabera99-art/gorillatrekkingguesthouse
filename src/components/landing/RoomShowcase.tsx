@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const rooms = [
   {
@@ -107,9 +108,11 @@ const RoomShowcase = () => {
                       <span className="text-xs font-sans">{room.capacity}</span>
                     </div>
                   </div>
-                  <Button className="w-full mt-4 bg-secondary text-secondary-foreground hover:bg-secondary/90 font-sans tracking-wide">
-                    View Details
-                  </Button>
+                  <Link to="/rooms">
+                    <Button className="w-full mt-4 bg-secondary text-secondary-foreground hover:bg-secondary/90 font-sans tracking-wide">
+                      View Details
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </motion.div>
