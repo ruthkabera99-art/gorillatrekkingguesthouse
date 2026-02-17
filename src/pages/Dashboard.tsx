@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, LogOut, Calendar, User, UtensilsCrossed, ChefHat, Wine } from "lucide-react";
+import { ArrowLeft, LogOut, Calendar, User, UtensilsCrossed, ChefHat, Wine, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
@@ -96,6 +96,11 @@ const Dashboard = () => {
           <Link to="/bar">
             <Button variant="outline" className="font-sans gap-2">
               <Wine size={16} /> Bar
+            </Button>
+          </Link>
+          <Link to="/admin">
+            <Button variant="outline" className="font-sans gap-2">
+              <Shield size={16} /> Admin Panel
             </Button>
           </Link>
         </div>

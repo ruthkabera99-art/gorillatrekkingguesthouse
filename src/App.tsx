@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import Menu from "./pages/Menu";
 import KitchenDashboard from "./pages/KitchenDashboard";
 import BarDashboard from "./pages/BarDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/menu" element={<Menu />} />
             <Route path="/kitchen" element={<KitchenDashboard />} />
             <Route path="/bar" element={<BarDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
