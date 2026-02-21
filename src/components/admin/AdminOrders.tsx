@@ -80,6 +80,11 @@ const AdminOrders = () => {
                       <span className="font-sans font-bold text-foreground text-sm">
                         {o.source_type === "room" ? "🏨 Room Service" : o.source_id === "online" ? "📱 Online Order" : `🪑 Table ${o.source_id}`}
                       </span>
+                      {o.guest_name && (
+                        <span className="text-xs font-sans px-2 py-0.5 rounded-full bg-muted text-foreground">
+                          👤 {o.guest_name} {o.guest_phone ? `· ${o.guest_phone}` : ""}
+                        </span>
+                      )}
                       <span className={`text-xs font-sans px-2 py-0.5 rounded-full capitalize ${
                         o.status === "delivered" ? "bg-green-100 text-green-700" :
                         o.status === "cancelled" ? "bg-red-100 text-red-700" :

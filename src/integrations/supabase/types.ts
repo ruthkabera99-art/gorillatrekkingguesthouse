@@ -124,6 +124,8 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          guest_name: string | null
+          guest_phone: string | null
           id: string
           notes: string | null
           payment_status: Database["public"]["Enums"]["order_payment_status"]
@@ -136,6 +138,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
           notes?: string | null
           payment_status?: Database["public"]["Enums"]["order_payment_status"]
@@ -148,6 +152,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          guest_name?: string | null
+          guest_phone?: string | null
           id?: string
           notes?: string | null
           payment_status?: Database["public"]["Enums"]["order_payment_status"]
