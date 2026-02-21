@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,37 +8,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ShoppingCart, Plus, Minus, X, UtensilsCrossed, Wine, Search, ArrowLeft, CheckCircle, Clock, ChefHat, Truck } from "lucide-react";
-import { Link } from "react-router-dom";
+import {
+  ShoppingCart, Plus, Minus, X, UtensilsCrossed, Wine,
+  Search, ArrowLeft, CheckCircle, Clock, ChefHat, Truck, User
+} from "lucide-react";
 
 type Product = {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  category: string;
-  department: string;
-  image_url: string | null;
-  available: boolean;
+  id: string; name: string; description: string | null; price: number;
+  category: string; department: string; image_url: string | null; available: boolean;
 };
-
-type CartItem = {
-  product: Product;
-  quantity: number;
-  note: string;
-};
+type CartItem = { product: Product; quantity: number; note: string; };
+type GuestInfo = { name: string; phone: string; };
 
 const categoryLabels: Record<string, string> = {
-  appetizer: "Appetizers",
-  main_course: "Main Courses",
-  dessert: "Desserts",
-  side: "Sides",
-  soft_drink: "Soft Drinks",
-  beer: "Beer",
-  wine: "Wine",
-  cocktail: "Cocktails",
-  spirit: "Spirits",
-  hot_beverage: "Hot Beverages",
+  appetizer: "Appetizers", main_course: "Main Courses", dessert: "Desserts",
+  side: "Sides", soft_drink: "Soft Drinks", beer: "Beer", wine: "Wine",
+  cocktail: "Cocktails", spirit: "Spirits", hot_beverage: "Hot Beverages",
 };
 
 const formatRWF = (amount: number) => `RWF ${amount.toLocaleString()}`;
@@ -46,7 +31,7 @@ const formatRWF = (amount: number) => `RWF ${amount.toLocaleString()}`;
 const statusConfig: Record<string, { icon: any; label: string; color: string }> = {
   pending: { icon: Clock, label: "Order Received", color: "text-yellow-600" },
   preparing: { icon: ChefHat, label: "Being Prepared", color: "text-blue-600" },
-  ready: { icon: CheckCircle, label: "Ready for Pickup/Delivery", color: "text-green-600" },
+  ready: { icon: CheckCircle, label: "Ready", color: "text-green-600" },
   delivered: { icon: Truck, label: "Delivered", color: "text-green-700" },
   cancelled: { icon: X, label: "Cancelled", color: "text-destructive" },
 };
@@ -66,26 +51,37 @@ const Menu = () => {
   const [chargeToRoom, setChargeToRoom] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [orderNotes, setOrderNotes] = useState("");
-  
-  // Order tracking state
   const [placedOrder, setPlacedOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
+
+  // Guest login state
+  const [guest, setGuest] = useState<GuestInfo | null>(() => {
+    const saved = sessionStorage.getItem("guest_info");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [guestForm, setGuestForm] = useState({ name: "", phone: "" });
+
+  const saveGuest = () => {
+    const name = guestForm.name.trim();
+    const phone = guestForm.phone.trim();
+    if (!name || name.length < 2) { toast.error("Please enter your name"); return; }
+    if (!phone || phone.length < 6) { toast.error("Please enter a valid phone number"); return; }
+    const info = { name, phone };
+    sessionStorage.setItem("guest_info", JSON.stringify(info));
+    setGuest(info);
+    toast.success(`Welcome, ${name}!`);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       const { data } = await supabase.from("products").select("*").eq("available", true).order("category");
       setProducts((data as Product[]) || []);
-
       if (user) {
         const today = new Date().toISOString().split("T")[0];
         const { data: booking } = await supabase
-          .from("bookings")
-          .select("*, rooms(name)")
-          .eq("user_id", user.id)
-          .in("status", ["confirmed", "pending"])
-          .lte("check_in", today)
-          .gte("check_out", today)
-          .maybeSingle();
+          .from("bookings").select("*, rooms(name)")
+          .eq("user_id", user.id).in("status", ["confirmed", "pending"])
+          .lte("check_in", today).gte("check_out", today).maybeSingle();
         setActiveBooking(booking);
       }
       setLoading(false);
@@ -93,25 +89,14 @@ const Menu = () => {
     fetchData();
   }, [user]);
 
-  // Realtime order tracking
   useEffect(() => {
     if (!placedOrder) return;
-    const ch = supabase
-      .channel(`order-${placedOrder.id}`)
+    const ch = supabase.channel(`order-${placedOrder.id}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${placedOrder.id}` }, (payload) => {
         setPlacedOrder((prev: any) => ({ ...prev, ...payload.new }));
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "order_items", filter: `order_id=eq.${placedOrder.id}` }, () => {
-        fetchOrderItems(placedOrder.id);
-      })
-      .subscribe();
+      }).subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [placedOrder?.id]);
-
-  const fetchOrderItems = async (orderId: string) => {
-    const { data } = await supabase.from("order_items").select("*, product:products(name, department)").eq("order_id", orderId);
-    setOrderItems(data || []);
-  };
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -136,6 +121,7 @@ const Menu = () => {
 
   const submitOrder = async () => {
     if (cart.length === 0) return;
+    if (!user && !guest) { toast.error("Please enter your details first"); return; }
     setSubmitting(true);
 
     const sourceType = activeBooking && chargeToRoom ? "room" : "table";
@@ -148,6 +134,8 @@ const Menu = () => {
       total: cartTotal,
       payment_status: chargeToRoom ? "charged_to_room" : "unpaid",
       notes: orderNotes || null,
+      guest_name: guest?.name || null,
+      guest_phone: guest?.phone || null,
     } as any).select().single();
 
     if (error || !order) {
@@ -172,8 +160,7 @@ const Menu = () => {
       toast.success("Order placed successfully!");
       setPlacedOrder(order);
       setOrderItems(items.map((it, idx) => ({
-        ...it,
-        id: `temp-${idx}`,
+        ...it, id: `temp-${idx}`,
         product: { name: cart[idx].product.name, department: cart[idx].product.department },
         status: "pending",
       })));
@@ -191,13 +178,69 @@ const Menu = () => {
   });
 
   const grouped = filtered.reduce<Record<string, Product[]>>((acc, p) => {
-    const cat = p.category;
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(p);
+    if (!acc[p.category]) acc[p.category] = [];
+    acc[p.category].push(p);
     return acc;
   }, {});
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+
+  // Guest login screen (only for non-authenticated users without guest session)
+  if (!user && !guest) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm">
+          <Card className="bg-card border border-border">
+            <CardContent className="p-6 space-y-5">
+              <div className="text-center space-y-2">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                  <UtensilsCrossed size={28} className="text-primary" />
+                </div>
+                <h2 className="font-serif text-xl font-bold text-foreground">Welcome!</h2>
+                <p className="text-sm text-muted-foreground font-sans">
+                  {tableNumber ? `Table ${tableNumber} — ` : ""}Enter your details to start ordering
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-sans font-medium text-foreground">Your Name</label>
+                  <Input
+                    placeholder="e.g. Jean Pierre"
+                    value={guestForm.name}
+                    onChange={(e) => setGuestForm({ ...guestForm, name: e.target.value })}
+                    className="font-sans mt-1"
+                    maxLength={100}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-sans font-medium text-foreground">Phone Number</label>
+                  <Input
+                    placeholder="e.g. 0788123456"
+                    value={guestForm.phone}
+                    onChange={(e) => setGuestForm({ ...guestForm, phone: e.target.value })}
+                    className="font-sans mt-1"
+                    type="tel"
+                    maxLength={20}
+                  />
+                </div>
+                <Button onClick={saveGuest} className="w-full font-sans py-5 text-base">
+                  Start Ordering 🍽️
+                </Button>
+              </div>
+
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground font-sans">No account needed. Quick & easy!</p>
+                <Link to="/auth" className="text-xs text-primary font-sans hover:underline mt-1 inline-block">
+                  Hotel guest? Sign in here
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
 
   // Order confirmation/tracking view
   if (placedOrder) {
@@ -212,17 +255,19 @@ const Menu = () => {
                 <StatusIcon size={56} className={`mx-auto ${status.color}`} />
               </motion.div>
               <h2 className="font-serif text-2xl font-bold text-foreground">Order Placed!</h2>
-              <p className="text-muted-foreground font-sans text-sm">Your order has been sent to our kitchen & bar staff.</p>
-              
+              <p className="text-muted-foreground font-sans text-sm">
+                {guest ? `Thank you, ${guest.name}!` : ""} Your order has been sent to our staff.
+              </p>
+
               <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2">
                 <div className="flex justify-between text-sm font-sans">
                   <span className="text-muted-foreground">Status</span>
                   <span className={`font-semibold capitalize ${status.color}`}>{status.label}</span>
                 </div>
                 <div className="flex justify-between text-sm font-sans">
-                  <span className="text-muted-foreground">Order Source</span>
+                  <span className="text-muted-foreground">Source</span>
                   <span className="font-medium text-foreground">
-                    {placedOrder.source_type === "room" ? "🏨 Room Service" : tableNumber ? `🪑 Table ${tableNumber}` : "📱 Online Order"}
+                    {placedOrder.source_type === "room" ? "🏨 Room Service" : tableNumber ? `🪑 Table ${tableNumber}` : "📱 Online"}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm font-sans">
@@ -246,11 +291,8 @@ const Menu = () => {
                 <span className="text-xl font-bold text-primary">{formatRWF(Number(placedOrder.total))}</span>
               </div>
 
-              <p className="text-xs text-muted-foreground font-sans">This page updates in real-time as your order progresses.</p>
-
-              <Button onClick={() => setPlacedOrder(null)} variant="outline" className="w-full font-sans">
-                Order More
-              </Button>
+              <p className="text-xs text-muted-foreground font-sans">This page updates in real-time.</p>
+              <Button onClick={() => setPlacedOrder(null)} variant="outline" className="w-full font-sans">Order More</Button>
             </CardContent>
           </Card>
         </motion.div>
@@ -271,7 +313,8 @@ const Menu = () => {
               <div>
                 <h1 className="font-serif text-xl font-bold text-foreground">Menu</h1>
                 <p className="text-xs text-muted-foreground font-sans">
-                  {tableNumber ? `Table ${tableNumber}` : activeBooking ? `Room Service — ${activeBooking.rooms?.name}` : "Order Online — Gorilla Trekking Guest House"}
+                  {tableNumber ? `Table ${tableNumber}` : activeBooking ? `Room Service — ${activeBooking.rooms?.name}` : "Order Online"}{" "}
+                  {guest && <span>· Hi, {guest.name} 👋</span>}
                 </p>
               </div>
             </div>
@@ -285,14 +328,10 @@ const Menu = () => {
             </button>
           </div>
 
-          {/* Filter tabs */}
           <div className="flex gap-2 mb-3">
             {([["all", "All"], ["kitchen", "Food"], ["bar", "Drinks"]] as const).map(([val, label]) => (
-              <button
-                key={val}
-                onClick={() => setFilter(val)}
-                className={`px-4 py-1.5 rounded-full text-sm font-sans transition-colors ${filter === val ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
-              >
+              <button key={val} onClick={() => setFilter(val)}
+                className={`px-4 py-1.5 rounded-full text-sm font-sans transition-colors ${filter === val ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}>
                 {val === "kitchen" && <UtensilsCrossed size={14} className="inline mr-1" />}
                 {val === "bar" && <Wine size={14} className="inline mr-1" />}
                 {label}
@@ -300,7 +339,6 @@ const Menu = () => {
             ))}
           </div>
 
-          {/* Search */}
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search menu..." className="pl-9 font-sans" />
@@ -308,13 +346,12 @@ const Menu = () => {
         </div>
       </div>
 
-      {/* Menu items by category */}
+      {/* Menu items */}
       <div className="container mx-auto px-4 py-6 space-y-8">
         {Object.keys(grouped).length === 0 && (
           <div className="text-center py-16 space-y-3">
             <UtensilsCrossed size={48} className="mx-auto text-muted-foreground" />
             <p className="text-muted-foreground font-sans">No menu items available yet.</p>
-            <p className="text-xs text-muted-foreground font-sans">Menu items are added by admin in the dashboard.</p>
           </div>
         )}
         {Object.entries(grouped).map(([category, items]) => (
@@ -359,13 +396,8 @@ const Menu = () => {
         {cartOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50" onClick={() => setCartOpen(false)} />
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25 }}
-              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-card z-50 shadow-2xl flex flex-col"
-            >
+            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25 }}
+              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-card z-50 shadow-2xl flex flex-col">
               <div className="flex items-center justify-between p-4 border-b border-border">
                 <h2 className="font-serif text-lg font-bold text-card-foreground">Your Order</h2>
                 <button onClick={() => setCartOpen(false)} className="p-2 rounded-full hover:bg-muted"><X size={20} /></button>
@@ -374,38 +406,25 @@ const Menu = () => {
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {cart.length === 0 ? (
                   <p className="text-center text-muted-foreground font-sans py-12">Cart is empty</p>
-                ) : (
-                  cart.map((item) => (
-                    <div key={item.product.id} className="bg-muted/50 rounded-lg p-3">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-sans font-semibold text-sm text-foreground">{item.product.name}</h4>
-                        <span className="font-sans font-bold text-sm text-primary">{formatRWF(item.product.price * item.quantity)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <button onClick={() => updateQuantity(item.product.id, -1)} className="w-6 h-6 rounded-full bg-background flex items-center justify-center"><Minus size={12} /></button>
-                        <span className="text-sm font-sans font-medium">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.product.id, 1)} className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center"><Plus size={12} /></button>
-                      </div>
-                      <Input
-                        placeholder="Special instructions..."
-                        value={item.note}
-                        onChange={(e) => updateItemNote(item.product.id, e.target.value)}
-                        className="text-xs h-8 font-sans"
-                      />
+                ) : cart.map((item) => (
+                  <div key={item.product.id} className="bg-muted/50 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="font-sans font-semibold text-sm text-foreground">{item.product.name}</h4>
+                      <span className="font-sans font-bold text-sm text-primary">{formatRWF(item.product.price * item.quantity)}</span>
                     </div>
-                  ))
-                )}
+                    <div className="flex items-center gap-2 mb-2">
+                      <button onClick={() => updateQuantity(item.product.id, -1)} className="w-6 h-6 rounded-full bg-background flex items-center justify-center"><Minus size={12} /></button>
+                      <span className="text-sm font-sans font-medium">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.product.id, 1)} className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center"><Plus size={12} /></button>
+                    </div>
+                    <Input placeholder="Special instructions..." value={item.note} onChange={(e) => updateItemNote(item.product.id, e.target.value)} className="text-xs h-8 font-sans" />
+                  </div>
+                ))}
               </div>
 
               {cart.length > 0 && (
                 <div className="p-4 border-t border-border space-y-3">
-                  <Textarea
-                    placeholder="Order notes..."
-                    value={orderNotes}
-                    onChange={(e) => setOrderNotes(e.target.value)}
-                    className="font-sans text-sm"
-                    rows={2}
-                  />
+                  <Textarea placeholder="Order notes..." value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} className="font-sans text-sm" rows={2} />
 
                   {activeBooking && (
                     <label className="flex items-center gap-2 text-sm font-sans text-foreground cursor-pointer">
@@ -416,7 +435,7 @@ const Menu = () => {
 
                   {!tableNumber && !activeBooking && (
                     <p className="text-xs text-muted-foreground font-sans bg-muted/50 rounded-lg p-2">
-                      📱 Online order — pay at the restaurant when you arrive, or contact us for delivery.
+                      📱 Online order — pay at the restaurant when you arrive.
                     </p>
                   )}
 
@@ -435,14 +454,10 @@ const Menu = () => {
         )}
       </AnimatePresence>
 
-      {/* Floating cart button */}
+      {/* Floating cart */}
       {cart.length > 0 && !cartOpen && (
-        <motion.button
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          onClick={() => setCartOpen(true)}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full px-6 py-3 shadow-luxury flex items-center gap-3 font-sans z-30"
-        >
+        <motion.button initial={{ y: 100 }} animate={{ y: 0 }} onClick={() => setCartOpen(true)}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full px-6 py-3 shadow-luxury flex items-center gap-3 font-sans z-30">
           <ShoppingCart size={18} />
           <span className="font-semibold">{cart.reduce((s, i) => s + i.quantity, 0)} items</span>
           <span className="font-bold">{formatRWF(cartTotal)}</span>
