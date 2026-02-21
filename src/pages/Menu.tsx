@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ShoppingCart, Plus, Minus, X, UtensilsCrossed, Wine, Search, ArrowLeft } from "lucide-react";
+import { ShoppingCart, Plus, Minus, X, UtensilsCrossed, Wine, Search, ArrowLeft, CheckCircle, Clock, ChefHat, Truck } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Product = {
@@ -43,6 +43,14 @@ const categoryLabels: Record<string, string> = {
 
 const formatRWF = (amount: number) => `RWF ${amount.toLocaleString()}`;
 
+const statusConfig: Record<string, { icon: any; label: string; color: string }> = {
+  pending: { icon: Clock, label: "Order Received", color: "text-yellow-600" },
+  preparing: { icon: ChefHat, label: "Being Prepared", color: "text-blue-600" },
+  ready: { icon: CheckCircle, label: "Ready for Pickup/Delivery", color: "text-green-600" },
+  delivered: { icon: Truck, label: "Delivered", color: "text-green-700" },
+  cancelled: { icon: X, label: "Cancelled", color: "text-destructive" },
+};
+
 const Menu = () => {
   const [searchParams] = useSearchParams();
   const tableNumber = searchParams.get("table");
@@ -58,13 +66,16 @@ const Menu = () => {
   const [chargeToRoom, setChargeToRoom] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [orderNotes, setOrderNotes] = useState("");
+  
+  // Order tracking state
+  const [placedOrder, setPlacedOrder] = useState<any>(null);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       const { data } = await supabase.from("products").select("*").eq("available", true).order("category");
       setProducts((data as Product[]) || []);
 
-      // Check if user has active booking
       if (user) {
         const today = new Date().toISOString().split("T")[0];
         const { data: booking } = await supabase
@@ -81,6 +92,26 @@ const Menu = () => {
     };
     fetchData();
   }, [user]);
+
+  // Realtime order tracking
+  useEffect(() => {
+    if (!placedOrder) return;
+    const ch = supabase
+      .channel(`order-${placedOrder.id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${placedOrder.id}` }, (payload) => {
+        setPlacedOrder((prev: any) => ({ ...prev, ...payload.new }));
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "order_items", filter: `order_id=eq.${placedOrder.id}` }, () => {
+        fetchOrderItems(placedOrder.id);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [placedOrder?.id]);
+
+  const fetchOrderItems = async (orderId: string) => {
+    const { data } = await supabase.from("order_items").select("*, product:products(name, department)").eq("order_id", orderId);
+    setOrderItems(data || []);
+  };
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -108,7 +139,7 @@ const Menu = () => {
     setSubmitting(true);
 
     const sourceType = activeBooking && chargeToRoom ? "room" : "table";
-    const sourceId = activeBooking && chargeToRoom ? activeBooking.room_id : (tableNumber || "walk-in");
+    const sourceId = activeBooking && chargeToRoom ? activeBooking.room_id : (tableNumber || "online");
 
     const { data: order, error } = await supabase.from("orders").insert({
       source_type: sourceType,
@@ -138,7 +169,14 @@ const Menu = () => {
     if (itemsError) {
       toast.error("Order created but items failed. Contact staff.");
     } else {
-      toast.success("Order placed! Your food & drinks are being prepared.");
+      toast.success("Order placed successfully!");
+      setPlacedOrder(order);
+      setOrderItems(items.map((it, idx) => ({
+        ...it,
+        id: `temp-${idx}`,
+        product: { name: cart[idx].product.name, department: cart[idx].product.department },
+        status: "pending",
+      })));
       setCart([]);
       setCartOpen(false);
       setOrderNotes("");
@@ -161,6 +199,65 @@ const Menu = () => {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
+  // Order confirmation/tracking view
+  if (placedOrder) {
+    const status = statusConfig[placedOrder.status] || statusConfig.pending;
+    const StatusIcon = status.icon;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-md">
+          <Card className="bg-card border border-border">
+            <CardContent className="p-6 text-center space-y-4">
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }}>
+                <StatusIcon size={56} className={`mx-auto ${status.color}`} />
+              </motion.div>
+              <h2 className="font-serif text-2xl font-bold text-foreground">Order Placed!</h2>
+              <p className="text-muted-foreground font-sans text-sm">Your order has been sent to our kitchen & bar staff.</p>
+              
+              <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2">
+                <div className="flex justify-between text-sm font-sans">
+                  <span className="text-muted-foreground">Status</span>
+                  <span className={`font-semibold capitalize ${status.color}`}>{status.label}</span>
+                </div>
+                <div className="flex justify-between text-sm font-sans">
+                  <span className="text-muted-foreground">Order Source</span>
+                  <span className="font-medium text-foreground">
+                    {placedOrder.source_type === "room" ? "🏨 Room Service" : tableNumber ? `🪑 Table ${tableNumber}` : "📱 Online Order"}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm font-sans">
+                  <span className="text-muted-foreground">Payment</span>
+                  <span className="font-medium text-foreground capitalize">{placedOrder.payment_status?.replace("_", " ")}</span>
+                </div>
+              </div>
+
+              <div className="text-left space-y-2">
+                <h3 className="font-sans font-semibold text-sm text-foreground">Items</h3>
+                {orderItems.map((item: any, idx: number) => (
+                  <div key={item.id || idx} className="flex justify-between text-sm font-sans">
+                    <span className="text-foreground">{item.department === "kitchen" ? "🍽️" : "🍺"} {item.product?.name} × {item.quantity}</span>
+                    <span className="text-muted-foreground">{formatRWF(item.unit_price * item.quantity)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-between font-sans border-t border-border pt-3">
+                <span className="font-semibold text-foreground">Total</span>
+                <span className="text-xl font-bold text-primary">{formatRWF(Number(placedOrder.total))}</span>
+              </div>
+
+              <p className="text-xs text-muted-foreground font-sans">This page updates in real-time as your order progresses.</p>
+
+              <Button onClick={() => setPlacedOrder(null)} variant="outline" className="w-full font-sans">
+                Order More
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
@@ -174,7 +271,7 @@ const Menu = () => {
               <div>
                 <h1 className="font-serif text-xl font-bold text-foreground">Menu</h1>
                 <p className="text-xs text-muted-foreground font-sans">
-                  {tableNumber ? `Table ${tableNumber}` : activeBooking ? `Room Service — ${activeBooking.rooms?.name}` : "Gorilla Trekking Guest House"}
+                  {tableNumber ? `Table ${tableNumber}` : activeBooking ? `Room Service — ${activeBooking.rooms?.name}` : "Order Online — Gorilla Trekking Guest House"}
                 </p>
               </div>
             </div>
@@ -213,6 +310,13 @@ const Menu = () => {
 
       {/* Menu items by category */}
       <div className="container mx-auto px-4 py-6 space-y-8">
+        {Object.keys(grouped).length === 0 && (
+          <div className="text-center py-16 space-y-3">
+            <UtensilsCrossed size={48} className="mx-auto text-muted-foreground" />
+            <p className="text-muted-foreground font-sans">No menu items available yet.</p>
+            <p className="text-xs text-muted-foreground font-sans">Menu items are added by admin in the dashboard.</p>
+          </div>
+        )}
         {Object.entries(grouped).map(([category, items]) => (
           <div key={category}>
             <h2 className="font-serif text-lg font-semibold text-foreground mb-3">{categoryLabels[category] || category}</h2>
@@ -248,9 +352,6 @@ const Menu = () => {
             </div>
           </div>
         ))}
-        {Object.keys(grouped).length === 0 && (
-          <p className="text-center text-muted-foreground font-sans py-12">No items found.</p>
-        )}
       </div>
 
       {/* Cart drawer */}
@@ -311,6 +412,12 @@ const Menu = () => {
                       <input type="checkbox" checked={chargeToRoom} onChange={(e) => setChargeToRoom(e.target.checked)} className="rounded border-border" />
                       Charge to Room ({activeBooking.rooms?.name})
                     </label>
+                  )}
+
+                  {!tableNumber && !activeBooking && (
+                    <p className="text-xs text-muted-foreground font-sans bg-muted/50 rounded-lg p-2">
+                      📱 Online order — pay at the restaurant when you arrive, or contact us for delivery.
+                    </p>
                   )}
 
                   <div className="flex items-center justify-between font-sans">

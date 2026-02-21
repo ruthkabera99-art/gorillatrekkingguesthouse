@@ -78,7 +78,7 @@ const AdminOrders = () => {
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-sans font-bold text-foreground text-sm">
-                        {o.source_type === "room" ? "🏨 Room" : "🪑 Table"} {o.source_id}
+                        {o.source_type === "room" ? "🏨 Room Service" : o.source_id === "online" ? "📱 Online Order" : `🪑 Table ${o.source_id}`}
                       </span>
                       <span className={`text-xs font-sans px-2 py-0.5 rounded-full capitalize ${
                         o.status === "delivered" ? "bg-green-100 text-green-700" :

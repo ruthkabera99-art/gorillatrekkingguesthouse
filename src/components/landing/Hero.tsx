@@ -27,11 +27,11 @@ const Hero = () => {
               Book Your Stay
             </Button>
           </Link>
-          <a href="#rooms">
+          <Link to="/menu">
             <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 px-10 py-6 text-base font-sans tracking-wide backdrop-blur-sm">
-              Explore Rooms
+              🍽️ Order Online
             </Button>
-          </a>
+          </Link>
         </motion.div>
       </div>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }} className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/60">
