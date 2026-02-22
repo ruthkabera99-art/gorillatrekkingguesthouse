@@ -28,10 +28,14 @@ import AdminProducts from "@/components/admin/AdminProducts";
 import AdminTables from "@/components/admin/AdminTables";
 import AdminPromotions from "@/components/admin/AdminPromotions";
 import AdminSettings from "@/components/admin/AdminSettings";
+import AdminKitchen from "@/components/admin/AdminKitchen";
+import AdminBar from "@/components/admin/AdminBar";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
   { key: "orders", label: "Orders", icon: ShoppingCart },
+  { key: "kitchen", label: "Kitchen", icon: ChefHat },
+  { key: "bar", label: "Bar", icon: Wine },
   { key: "invoices", label: "Invoices & Billing", icon: Receipt },
   { key: "rooms", label: "Rooms", icon: BedDouble },
   { key: "products", label: "Menu Products", icon: UtensilsCrossed },
@@ -77,6 +81,8 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case "orders": return <AdminOrders />;
+      case "kitchen": return <AdminKitchen />;
+      case "bar": return <AdminBar />;
       case "invoices": return <AdminInvoices />;
       case "rooms": return <AdminRooms />;
       case "products": return <AdminProducts />;

@@ -12,13 +12,14 @@ import {
   ShoppingCart, Plus, Minus, X, UtensilsCrossed, Wine,
   Search, ArrowLeft, CheckCircle, Clock, ChefHat, Truck, User
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Product = {
   id: string; name: string; description: string | null; price: number;
   category: string; department: string; image_url: string | null; available: boolean;
 };
 type CartItem = { product: Product; quantity: number; note: string; };
-type GuestInfo = { name: string; phone: string; };
+type GuestInfo = { name: string; phone: string; table?: string };
 
 const categoryLabels: Record<string, string> = {
   appetizer: "Appetizers", main_course: "Main Courses", dessert: "Desserts",
@@ -53,20 +54,21 @@ const Menu = () => {
   const [orderNotes, setOrderNotes] = useState("");
   const [placedOrder, setPlacedOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [tables, setTables] = useState<{ id: string; table_number: number }[]>([]);
 
   // Guest login state
   const [guest, setGuest] = useState<GuestInfo | null>(() => {
     const saved = sessionStorage.getItem("guest_info");
     return saved ? JSON.parse(saved) : null;
   });
-  const [guestForm, setGuestForm] = useState({ name: "", phone: "" });
+  const [guestForm, setGuestForm] = useState({ name: "", phone: "", table: "" });
 
   const saveGuest = () => {
     const name = guestForm.name.trim();
     const phone = guestForm.phone.trim();
     if (!name || name.length < 2) { toast.error("Please enter your name"); return; }
     if (!phone || phone.length < 6) { toast.error("Please enter a valid phone number"); return; }
-    const info = { name, phone };
+    const info: GuestInfo = { name, phone, table: guestForm.table || undefined };
     sessionStorage.setItem("guest_info", JSON.stringify(info));
     setGuest(info);
     toast.success(`Welcome, ${name}!`);
@@ -74,8 +76,12 @@ const Menu = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await supabase.from("products").select("*").eq("available", true).order("category");
-      setProducts((data as Product[]) || []);
+      const [{ data: prods }, { data: tbls }] = await Promise.all([
+        supabase.from("products").select("*").eq("available", true).order("category"),
+        supabase.from("restaurant_tables").select("id, table_number").order("table_number"),
+      ]);
+      setProducts((prods as Product[]) || []);
+      setTables((tbls as any) || []);
       if (user) {
         const today = new Date().toISOString().split("T")[0];
         const { data: booking } = await supabase
@@ -124,8 +130,9 @@ const Menu = () => {
     if (!user && !guest) { toast.error("Please enter your details first"); return; }
     setSubmitting(true);
 
+    const guestTable = guest?.table || tableNumber;
     const sourceType = activeBooking && chargeToRoom ? "room" : "table";
-    const sourceId = activeBooking && chargeToRoom ? activeBooking.room_id : (tableNumber || "online");
+    const sourceId = activeBooking && chargeToRoom ? activeBooking.room_id : (guestTable || "online");
 
     const { data: order, error } = await supabase.from("orders").insert({
       source_type: sourceType,
@@ -224,6 +231,20 @@ const Menu = () => {
                     maxLength={20}
                   />
                 </div>
+                {!tableNumber && tables.length > 0 && (
+                  <div>
+                    <label className="text-sm font-sans font-medium text-foreground">Table (optional)</label>
+                    <Select value={guestForm.table} onValueChange={(v) => setGuestForm({ ...guestForm, table: v })}>
+                      <SelectTrigger className="font-sans mt-1"><SelectValue placeholder="Select a table..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="online">No table (takeaway/online)</SelectItem>
+                        {tables.map((t) => (
+                          <SelectItem key={t.id} value={String(t.table_number)}>Table {t.table_number}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <Button onClick={saveGuest} className="w-full font-sans py-5 text-base">
                   Start Ordering 🍽️
                 </Button>
