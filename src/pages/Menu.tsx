@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   ShoppingCart, Plus, Minus, X, UtensilsCrossed, Wine,
-  Search, ArrowLeft, CheckCircle, Clock, ChefHat, Truck, User
+  Search, ArrowLeft, CheckCircle, Clock, ChefHat, Truck, User, ClipboardList
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -54,6 +54,9 @@ const Menu = () => {
   const [orderNotes, setOrderNotes] = useState("");
   const [placedOrder, setPlacedOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [trackingOpen, setTrackingOpen] = useState(false);
+  const [trackedOrders, setTrackedOrders] = useState<any[]>([]);
+  const [trackingLoading, setTrackingLoading] = useState(false);
   const [tables, setTables] = useState<{ id: string; table_number: number }[]>([]);
 
   // Guest login state
@@ -95,6 +98,7 @@ const Menu = () => {
     fetchData();
   }, [user]);
 
+  // Realtime tracking for placed order
   useEffect(() => {
     if (!placedOrder) return;
     const ch = supabase.channel(`order-${placedOrder.id}`)
@@ -103,6 +107,38 @@ const Menu = () => {
       }).subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [placedOrder?.id]);
+
+  // Realtime tracking for tracked orders
+  useEffect(() => {
+    if (trackedOrders.length === 0) return;
+    const ids = trackedOrders.map(o => o.id);
+    const ch = supabase.channel("tracked-orders")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, (payload) => {
+        if (ids.includes((payload.new as any).id)) {
+          setTrackedOrders(prev => prev.map(o => o.id === (payload.new as any).id ? { ...o, ...payload.new } : o));
+        }
+      }).subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [trackedOrders.map(o => o.id).join(",")]);
+
+  const fetchMyOrders = async () => {
+    const phone = guest?.phone;
+    if (!phone && !user) return;
+    setTrackingLoading(true);
+    let q = supabase.from("orders")
+      .select("*, order_items(*, product:products(name, department))")
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (user) {
+      q = q.eq("user_id", user.id);
+    } else if (phone) {
+      q = q.eq("guest_phone", phone);
+    }
+    const { data } = await q;
+    setTrackedOrders(data || []);
+    setTrackingLoading(false);
+    setTrackingOpen(true);
+  };
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -339,14 +375,19 @@ const Menu = () => {
                 </p>
               </div>
             </div>
-            <button onClick={() => setCartOpen(true)} className="relative p-3 rounded-full bg-primary text-primary-foreground shadow-luxury">
-              <ShoppingCart size={20} />
-              {cart.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center font-sans font-bold">
-                  {cart.reduce((s, i) => s + i.quantity, 0)}
-                </span>
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <button onClick={fetchMyOrders} className="p-3 rounded-full border border-border hover:bg-muted transition-colors relative" title="Track My Order">
+                <ClipboardList size={20} className="text-foreground" />
+              </button>
+              <button onClick={() => setCartOpen(true)} className="relative p-3 rounded-full bg-primary text-primary-foreground shadow-luxury">
+                <ShoppingCart size={20} />
+                {cart.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center font-sans font-bold">
+                    {cart.reduce((s, i) => s + i.quantity, 0)}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="flex gap-2 mb-3">
@@ -411,6 +452,69 @@ const Menu = () => {
           </div>
         ))}
       </div>
+
+      {/* Track Order drawer */}
+      <AnimatePresence>
+        {trackingOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50" onClick={() => setTrackingOpen(false)} />
+            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25 }}
+              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-card z-50 shadow-2xl flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b border-border">
+                <h2 className="font-serif text-lg font-bold text-card-foreground">My Orders</h2>
+                <button onClick={() => setTrackingOpen(false)} className="p-2 rounded-full hover:bg-muted"><X size={20} /></button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {trackingLoading ? (
+                  <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
+                ) : trackedOrders.length === 0 ? (
+                  <p className="text-center text-muted-foreground font-sans py-12">No orders found.</p>
+                ) : trackedOrders.map((o: any) => {
+                  const st = statusConfig[o.status] || statusConfig.pending;
+                  const StIcon = st.icon;
+                  return (
+                    <Card key={o.id} className="bg-card border border-border">
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <StIcon size={18} className={st.color} />
+                            <span className={`font-sans font-semibold text-sm capitalize ${st.color}`}>{st.label}</span>
+                          </div>
+                          <span className="text-lg font-bold font-sans text-primary">{formatRWF(Number(o.total))}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground font-sans">
+                          {new Date(o.created_at).toLocaleString()}
+                          {o.source_id !== "online" && o.source_type === "table" && ` · Table ${o.source_id}`}
+                        </div>
+                        {/* Progress bar */}
+                        <div className="flex gap-1">
+                          {["pending", "preparing", "ready", "delivered"].map((step, idx) => {
+                            const steps = ["pending", "preparing", "ready", "delivered"];
+                            const currentIdx = steps.indexOf(o.status);
+                            const active = o.status !== "cancelled" && idx <= currentIdx;
+                            return <div key={step} className={`h-1.5 flex-1 rounded-full ${active ? "bg-primary" : "bg-muted"}`} />;
+                          })}
+                        </div>
+                        <div className="space-y-1">
+                          {(o.order_items || []).map((item: any) => (
+                            <div key={item.id} className="text-sm font-sans text-foreground flex justify-between">
+                              <span>{item.product?.department === "kitchen" ? "🍽️" : "🍺"} {item.product?.name} × {item.quantity}</span>
+                              <span className="text-muted-foreground">{formatRWF(item.unit_price * item.quantity)}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-xs font-sans text-muted-foreground">
+                          <span>Payment: <span className="capitalize">{o.payment_status?.replace("_", " ")}</span></span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Cart drawer */}
       <AnimatePresence>
