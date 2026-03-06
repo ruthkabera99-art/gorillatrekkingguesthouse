@@ -29,12 +29,12 @@ const categoryLabels: Record<string, string> = {
 
 const formatRWF = (amount: number) => `RWF ${amount.toLocaleString()}`;
 
-const statusConfig: Record<string, { icon: any; label: string; color: string }> = {
-  pending: { icon: Clock, label: "Order Received", color: "text-yellow-600" },
-  preparing: { icon: ChefHat, label: "Being Prepared", color: "text-blue-600" },
-  ready: { icon: CheckCircle, label: "Ready", color: "text-green-600" },
-  delivered: { icon: Truck, label: "Delivered", color: "text-green-700" },
-  cancelled: { icon: X, label: "Cancelled", color: "text-destructive" },
+const statusConfig: Record<string, { icon: any; label: string; color: string; message: string }> = {
+  pending: { icon: Clock, label: "Order Received", color: "text-yellow-600", message: "Your order has been received and is waiting to be processed." },
+  preparing: { icon: ChefHat, label: "Being Prepared", color: "text-blue-600", message: "Your order has been assigned to a waiter and is being prepared!" },
+  ready: { icon: Truck, label: "Coming Soon!", color: "text-green-600", message: "Your order is ready and on its way to you! 🚀" },
+  delivered: { icon: CheckCircle, label: "Delivered", color: "text-green-700", message: "Your order has been delivered. Enjoy! 🎉" },
+  cancelled: { icon: X, label: "Cancelled", color: "text-destructive", message: "This order has been cancelled." },
 };
 
 const Menu = () => {
@@ -313,7 +313,10 @@ const Menu = () => {
               </motion.div>
               <h2 className="font-serif text-2xl font-bold text-foreground">Order Placed!</h2>
               <p className="text-muted-foreground font-sans text-sm">
-                {guest ? `Thank you, ${guest.name}!` : ""} Your order has been sent to our staff.
+                {guest ? `Thank you, ${guest.name}!` : "Thank you!"}{" "}
+                {placedOrder.assigned_waiter
+                  ? `Your order has been sent to ${placedOrder.assigned_waiter} who will deliver it to you.`
+                  : status.message}
               </p>
 
               <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2">
@@ -486,6 +489,10 @@ const Menu = () => {
                           {new Date(o.created_at).toLocaleString()}
                           {o.source_id !== "online" && o.source_type === "table" && ` · Table ${o.source_id}`}
                         </div>
+                        {o.assigned_waiter && (
+                          <p className="text-xs font-sans text-blue-600 font-medium">🧑‍🍳 Waiter: {o.assigned_waiter}</p>
+                        )}
+                        <p className="text-xs font-sans text-muted-foreground italic">{st.message}</p>
                         {/* Progress bar */}
                         <div className="flex gap-1">
                           {["pending", "preparing", "ready", "delivered"].map((step, idx) => {
