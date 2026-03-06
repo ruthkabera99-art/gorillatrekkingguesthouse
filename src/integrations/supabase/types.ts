@@ -123,6 +123,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          assigned_waiter: string | null
           created_at: string
           guest_name: string | null
           guest_phone: string | null
@@ -137,6 +138,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          assigned_waiter?: string | null
           created_at?: string
           guest_name?: string | null
           guest_phone?: string | null
@@ -151,6 +153,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          assigned_waiter?: string | null
           created_at?: string
           guest_name?: string | null
           guest_phone?: string | null

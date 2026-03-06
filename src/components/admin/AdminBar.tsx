@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Clock, RefreshCw } from "lucide-react";
+import { Clock, RefreshCw, CheckCircle } from "lucide-react";
 
 type OrderItem = {
   id: string;
@@ -14,7 +14,7 @@ type OrderItem = {
   status: string;
   department: string;
   product: { name: string; category: string } | null;
-  order: { source_type: string; source_id: string; created_at: string; guest_name: string | null } | null;
+  order: { source_type: string; source_id: string; created_at: string; guest_name: string | null; assigned_waiter: string | null } | null;
 };
 
 const statusColors: Record<string, string> = {
@@ -30,7 +30,7 @@ const AdminBar = () => {
   const fetchItems = async () => {
     const { data } = await supabase
       .from("order_items")
-      .select("*, product:products(name, category), order:orders(source_type, source_id, created_at, guest_name)")
+      .select("*, product:products(name, category), order:orders(source_type, source_id, created_at, guest_name, assigned_waiter)")
       .eq("department", "bar")
       .in("status", ["pending", "preparing", "ready"])
       .order("created_at", { ascending: true });
@@ -46,10 +46,10 @@ const AdminBar = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("order_items").update({ status } as any).eq("id", id);
+  const markServed = async (id: string) => {
+    const { error } = await supabase.from("order_items").update({ status: "delivered" } as any).eq("id", id);
     if (error) toast.error(error.message);
-    else { toast.success(`Status → ${status}`); fetchItems(); }
+    else { toast.success("Marked as served ✅"); fetchItems(); }
   };
 
   const timeAgo = (dateStr: string) => {
@@ -87,15 +87,14 @@ const AdminBar = () => {
                   {item.order?.source_type === "room" ? "🏨 Room" : "🪑 Table"} — {item.order?.source_id}
                   {item.order?.guest_name && <span className="ml-1">· 👤 {item.order.guest_name}</span>}
                 </p>
+                {item.order?.assigned_waiter && (
+                  <p className="text-xs font-sans text-blue-600">🧑‍🍳 Waiter: {item.order.assigned_waiter}</p>
+                )}
                 <div className="flex gap-2">
-                  {item.status === "pending" && (
-                    <Button size="sm" onClick={() => updateStatus(item.id, "preparing")} className="flex-1 font-sans">Start Preparing</Button>
-                  )}
-                  {item.status === "preparing" && (
-                    <Button size="sm" onClick={() => updateStatus(item.id, "ready")} className="flex-1 font-sans" variant="secondary">Mark Ready</Button>
-                  )}
-                  {item.status === "ready" && (
-                    <Button size="sm" onClick={() => updateStatus(item.id, "delivered")} className="flex-1 font-sans" variant="outline">Mark Delivered</Button>
+                  {(item.status === "ready" || item.status === "preparing") && (
+                    <Button size="sm" onClick={() => markServed(item.id)} className="flex-1 font-sans gap-1">
+                      <CheckCircle size={14} /> Served
+                    </Button>
                   )}
                 </div>
               </CardContent>

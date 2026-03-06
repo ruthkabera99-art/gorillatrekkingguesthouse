@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { RefreshCw } from "lucide-react";
 
@@ -12,6 +14,8 @@ const AdminOrders = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
+  const [waiterDialog, setWaiterDialog] = useState<{ open: boolean; orderId: string }>({ open: false, orderId: "" });
+  const [waiterName, setWaiterName] = useState("");
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -27,7 +31,6 @@ const AdminOrders = () => {
 
   useEffect(() => { fetchOrders(); }, [filter]);
 
-  // Realtime
   useEffect(() => {
     const ch = supabase.channel("admin-orders")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => fetchOrders())
@@ -35,10 +38,37 @@ const AdminOrders = () => {
     return () => { supabase.removeChannel(ch); };
   }, [filter]);
 
+  const handleStart = (orderId: string) => {
+    setWaiterName("");
+    setWaiterDialog({ open: true, orderId });
+  };
+
+  const confirmStart = async () => {
+    if (!waiterName.trim()) { toast.error("Please enter waiter name"); return; }
+    const { error } = await supabase.from("orders")
+      .update({ status: "preparing", assigned_waiter: waiterName.trim() } as any)
+      .eq("id", waiterDialog.orderId);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`Order started — assigned to ${waiterName.trim()}`);
+      // Also update all order items to preparing
+      await supabase.from("order_items").update({ status: "preparing" } as any).eq("order_id", waiterDialog.orderId);
+      fetchOrders();
+    }
+    setWaiterDialog({ open: false, orderId: "" });
+  };
+
   const updateOrderStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("orders").update({ status } as any).eq("id", id);
     if (error) toast.error(error.message);
-    else { toast.success(`Order ${status}`); fetchOrders(); }
+    else {
+      toast.success(`Order ${status}`);
+      // Sync order items status
+      if (status === "ready" || status === "delivered" || status === "cancelled") {
+        await supabase.from("order_items").update({ status } as any).eq("order_id", id);
+      }
+      fetchOrders();
+    }
   };
 
   const updatePayment = async (id: string, status: string) => {
@@ -97,6 +127,9 @@ const AdminOrders = () => {
                         "bg-red-100 text-red-700"
                       }`}>{o.payment_status}</span>
                     </div>
+                    {o.assigned_waiter && (
+                      <p className="text-xs font-sans text-blue-600">🧑‍🍳 Waiter: {o.assigned_waiter}</p>
+                    )}
                     <div className="text-xs text-muted-foreground font-sans">
                       {new Date(o.created_at).toLocaleString()}
                     </div>
@@ -114,7 +147,7 @@ const AdminOrders = () => {
                     <p className="text-lg font-bold font-sans text-primary">{fmt(Number(o.total))}</p>
                     <div className="flex gap-1 flex-wrap justify-end">
                       {o.status === "pending" && (
-                        <Button size="sm" className="text-xs font-sans" onClick={() => updateOrderStatus(o.id, "preparing")}>Start</Button>
+                        <Button size="sm" className="text-xs font-sans" onClick={() => handleStart(o.id)}>Start</Button>
                       )}
                       {o.status === "preparing" && (
                         <Button size="sm" className="text-xs font-sans" onClick={() => updateOrderStatus(o.id, "ready")}>Ready</Button>
@@ -136,6 +169,30 @@ const AdminOrders = () => {
           ))}
         </div>
       )}
+
+      {/* Assign Waiter Dialog */}
+      <Dialog open={waiterDialog.open} onOpenChange={(open) => setWaiterDialog({ ...waiterDialog, open })}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Assign Waiter</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground font-sans">Enter the waiter's name to assign this order:</p>
+            <Input
+              placeholder="e.g. Jean, Marie..."
+              value={waiterName}
+              onChange={(e) => setWaiterName(e.target.value)}
+              className="font-sans"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && confirmStart()}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWaiterDialog({ open: false, orderId: "" })} className="font-sans">Cancel</Button>
+            <Button onClick={confirmStart} className="font-sans">Start Order</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

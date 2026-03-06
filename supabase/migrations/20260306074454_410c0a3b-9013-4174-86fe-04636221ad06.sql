@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN assigned_waiter text DEFAULT NULL;
