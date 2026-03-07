@@ -653,11 +653,13 @@ const Menu = () => {
 
       {/* Floating cart */}
       {cart.length > 0 && !cartOpen && (
-        <motion.button initial={{ y: 100 }} animate={{ y: 0 }} onClick={() => setCartOpen(true)}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full px-6 py-3 shadow-luxury flex items-center gap-3 font-sans z-30">
-          <ShoppingCart size={18} />
-          <span className="font-semibold">{cart.reduce((s, i) => s + i.quantity, 0)} items</span>
-          <span className="font-bold">{formatRWF(cartTotal)}</span>
+        <motion.button initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} onClick={() => setCartOpen(true)}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground rounded-2xl px-6 py-3.5 shadow-2xl flex items-center gap-4 font-sans z-30 hover:scale-105 transition-transform">
+          <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+            {cart.reduce((s, i) => s + i.quantity, 0)}
+          </div>
+          <span className="font-semibold text-sm">View Order</span>
+          <span className="font-bold text-primary">{formatRWF(cartTotal)}</span>
         </motion.button>
       )}
     </div>
