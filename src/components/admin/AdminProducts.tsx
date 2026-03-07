@@ -20,7 +20,7 @@ const AdminProducts = () => {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ name: "", price: "", category: "main_course", department: "kitchen", description: "", available: true });
+  const [form, setForm] = useState({ name: "", price: "", category: "main_course", department: "kitchen", description: "", available: true, stock: "0" });
   const [filterDept, setFilterDept] = useState<string>("all");
 
   const fetch = async () => {
@@ -34,18 +34,18 @@ const AdminProducts = () => {
 
   const openEdit = (p: any) => {
     setEditing(p);
-    setForm({ name: p.name, price: String(p.price), category: p.category, department: p.department, description: p.description || "", available: p.available });
+    setForm({ name: p.name, price: String(p.price), category: p.category, department: p.department, description: p.description || "", available: p.available, stock: String(p.stock ?? 0) });
     setOpen(true);
   };
 
   const openNew = () => {
     setEditing(null);
-    setForm({ name: "", price: "", category: "main_course", department: "kitchen", description: "", available: true });
+    setForm({ name: "", price: "", category: "main_course", department: "kitchen", description: "", available: true, stock: "0" });
     setOpen(true);
   };
 
   const save = async () => {
-    const payload = { name: form.name, price: Number(form.price), category: form.category as any, department: form.department as any, description: form.description || null, available: form.available };
+    const payload = { name: form.name, price: Number(form.price), category: form.category as any, department: form.department as any, description: form.description || null, available: form.available, stock: Number(form.stock) || 0 };
     if (editing) {
       const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
       if (error) { toast.error(error.message); return; }
@@ -111,6 +111,7 @@ const AdminProducts = () => {
                 </Select>
               </div>
               <div><Label className="font-sans">Description</Label><Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
+              <div><Label className="font-sans">Stock Quantity</Label><Input type="number" min="0" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} placeholder="0 = unlimited" /></div>
               <div className="flex items-center gap-2">
                 <Switch checked={form.available} onCheckedChange={v => setForm({ ...form, available: v })} />
                 <Label className="font-sans">Available</Label>
@@ -130,6 +131,9 @@ const AdminProducts = () => {
                   <p className="font-sans font-bold text-foreground">{p.name}</p>
                   <p className="text-xs text-muted-foreground font-sans capitalize">{p.department} · {p.category.replace("_", " ")}</p>
                   <p className="text-sm font-sans text-primary font-bold mt-1">{fmt(Number(p.price))}</p>
+                  <p className={`text-xs font-sans mt-0.5 ${(p.stock !== undefined && p.stock !== null && p.stock > 0) ? (p.stock <= 5 ? "text-orange-500 font-semibold" : "text-muted-foreground") : "text-muted-foreground"}`}>
+                    {(p.stock !== undefined && p.stock !== null && p.stock > 0) ? `Stock: ${p.stock}` : "Unlimited"}
+                  </p>
                 </div>
                 <div className="flex items-center gap-1">
                   <Switch checked={p.available} onCheckedChange={v => toggle(p.id, v)} />
