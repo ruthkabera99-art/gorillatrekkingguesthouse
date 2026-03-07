@@ -362,97 +362,162 @@ const Menu = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-lg border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-3">
+      {/* Hero Header */}
+      <div className="relative bg-gradient-to-br from-secondary via-secondary to-[hsl(var(--navy-light))] text-secondary-foreground overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-primary blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-primary blur-2xl" />
+        </div>
+        <div className="container mx-auto px-4 pt-6 pb-8 relative z-10">
+          <div className="flex items-center justify-between mb-6">
+            <Link to="/" className="p-2.5 rounded-full glass hover:bg-white/20 transition-all">
+              <ArrowLeft size={18} className="text-secondary-foreground" />
+            </Link>
             <div className="flex items-center gap-3">
-              <Link to="/" className="p-2 rounded-full border border-border hover:bg-muted transition-colors">
-                <ArrowLeft size={18} />
-              </Link>
-              <div>
-                <h1 className="font-serif text-xl font-bold text-foreground">Menu</h1>
-                <p className="text-xs text-muted-foreground font-sans">
-                  {tableNumber ? `Table ${tableNumber}` : activeBooking ? `Room Service — ${activeBooking.rooms?.name}` : "Order Online"}{" "}
-                  {guest && <span>· Hi, {guest.name} 👋</span>}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button onClick={fetchMyOrders} className="p-3 rounded-full border border-border hover:bg-muted transition-colors relative" title="Track My Order">
-                <ClipboardList size={20} className="text-foreground" />
+              <button onClick={fetchMyOrders} className="p-2.5 rounded-full glass hover:bg-white/20 transition-all" title="Track My Order">
+                <ClipboardList size={18} className="text-secondary-foreground" />
               </button>
-              <button onClick={() => setCartOpen(true)} className="relative p-3 rounded-full bg-primary text-primary-foreground shadow-luxury">
-                <ShoppingCart size={20} />
+              <button onClick={() => setCartOpen(true)} className="relative p-2.5 rounded-full bg-primary text-primary-foreground shadow-luxury hover:scale-105 transition-transform">
+                <ShoppingCart size={18} />
                 {cart.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground rounded-full text-xs flex items-center justify-center font-sans font-bold">
+                  <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-destructive text-destructive-foreground rounded-full text-[10px] flex items-center justify-center font-sans font-bold ring-2 ring-secondary">
                     {cart.reduce((s, i) => s + i.quantity, 0)}
-                  </span>
+                  </motion.span>
                 )}
               </button>
             </div>
           </div>
 
-          <div className="flex gap-2 mb-3">
-            {([["all", "All"], ["kitchen", "Food"], ["bar", "Drinks"]] as const).map(([val, label]) => (
-              <button key={val} onClick={() => setFilter(val)}
-                className={`px-4 py-1.5 rounded-full text-sm font-sans transition-colors ${filter === val ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}>
-                {val === "kitchen" && <UtensilsCrossed size={14} className="inline mr-1" />}
-                {val === "bar" && <Wine size={14} className="inline mr-1" />}
+          <div className="text-center space-y-2 mb-6">
+            <motion.div initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+              <p className="text-primary text-xs font-sans tracking-[0.3em] uppercase">Gorilla Trekking Guest House</p>
+              <h1 className="font-serif text-3xl font-bold mt-1 text-secondary-foreground">Our Menu</h1>
+            </motion.div>
+            <p className="text-sm font-sans text-secondary-foreground/70">
+              {tableNumber ? `Table ${tableNumber}` : activeBooking ? `Room Service — ${activeBooking.rooms?.name}` : "Order Online"}{" "}
+              {guest && <span>· Welcome, {guest.name} ✨</span>}
+            </p>
+          </div>
+
+          {/* Filter pills */}
+          <div className="flex justify-center gap-2 mb-4">
+            {([["all", "All", null], ["kitchen", "Food", UtensilsCrossed], ["bar", "Drinks", Wine]] as const).map(([val, label, Icon]) => (
+              <motion.button key={val} whileTap={{ scale: 0.95 }} onClick={() => setFilter(val as any)}
+                className={`px-5 py-2 rounded-full text-sm font-sans font-medium transition-all flex items-center gap-1.5 ${
+                  filter === val 
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30" 
+                    : "glass text-secondary-foreground/80 hover:bg-white/20"
+                }`}>
+                {Icon && <Icon size={14} />}
                 {label}
-              </button>
+              </motion.button>
             ))}
           </div>
 
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search menu..." className="pl-9 font-sans" />
+          {/* Search */}
+          <div className="relative max-w-md mx-auto">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-secondary-foreground/50" />
+            <input
+              value={search} onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search our menu..."
+              className="w-full pl-10 pr-4 py-3 rounded-2xl glass text-secondary-foreground placeholder:text-secondary-foreground/40 font-sans text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+            />
           </div>
+        </div>
+        {/* Wave separator */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+            <path d="M0 40V20C240 0 480 0 720 20C960 40 1200 40 1440 20V40H0Z" fill="hsl(var(--background))" />
+          </svg>
         </div>
       </div>
 
       {/* Menu items */}
-      <div className="container mx-auto px-4 py-6 space-y-8">
+      <div className="container mx-auto px-4 py-6 space-y-10">
         {Object.keys(grouped).length === 0 && (
-          <div className="text-center py-16 space-y-3">
-            <UtensilsCrossed size={48} className="mx-auto text-muted-foreground" />
-            <p className="text-muted-foreground font-sans">No menu items available yet.</p>
-          </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20 space-y-4">
+            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto">
+              <UtensilsCrossed size={36} className="text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground font-sans text-lg">No menu items available yet.</p>
+          </motion.div>
         )}
-        {Object.entries(grouped).map(([category, items]) => (
-          <div key={category}>
-            <h2 className="font-serif text-lg font-semibold text-foreground mb-3">{categoryLabels[category] || category}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {items.map((product) => {
+        {Object.entries(grouped).map(([category, items], catIdx) => (
+          <motion.div key={category} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: catIdx * 0.08 }}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <span className="text-base">{
+                  category.includes("appetizer") ? "🥗" :
+                  category.includes("main") ? "🍽️" :
+                  category.includes("dessert") ? "🍰" :
+                  category.includes("side") ? "🥘" :
+                  category.includes("soft") ? "🥤" :
+                  category.includes("beer") ? "🍺" :
+                  category.includes("wine") ? "🍷" :
+                  category.includes("cocktail") ? "🍸" :
+                  category.includes("spirit") ? "🥃" :
+                  category.includes("hot") ? "☕" : "🍴"
+                }</span>
+              </div>
+              <h2 className="font-serif text-xl font-bold text-foreground">{categoryLabels[category] || category}</h2>
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground font-sans">{items.length} items</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {items.map((product, idx) => {
                 const inCart = cart.find((i) => i.product.id === product.id);
                 return (
-                  <Card key={product.id} className="bg-card border border-border overflow-hidden">
-                    <CardContent className="p-4 flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                        {product.department === "kitchen" ? <UtensilsCrossed size={22} className="text-primary" /> : <Wine size={22} className="text-primary" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-sans font-semibold text-sm text-card-foreground truncate">{product.name}</h3>
-                        {product.description && <p className="text-xs text-muted-foreground font-sans truncate">{product.description}</p>}
-                        <p className="text-sm font-bold text-primary font-sans mt-0.5">{formatRWF(product.price)}</p>
-                      </div>
-                      {inCart ? (
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => updateQuantity(product.id, -1)} className="w-7 h-7 rounded-full bg-muted flex items-center justify-center"><Minus size={14} /></button>
-                          <span className="text-sm font-sans font-bold w-5 text-center">{inCart.quantity}</span>
-                          <button onClick={() => updateQuantity(product.id, 1)} className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center"><Plus size={14} /></button>
+                  <motion.div key={product.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.04 }}>
+                    <Card className={`group bg-card border overflow-hidden transition-all duration-300 hover:shadow-luxury hover:border-primary/30 ${inCart ? "border-primary/40 ring-1 ring-primary/20" : "border-border"}`}>
+                      <CardContent className="p-0">
+                        <div className="flex items-stretch">
+                          {/* Icon/Image area */}
+                          <div className={`w-20 flex items-center justify-center flex-shrink-0 transition-colors ${
+                            inCart ? "bg-primary/15" : "bg-gradient-to-br from-muted to-muted/50 group-hover:from-primary/10 group-hover:to-primary/5"
+                          }`}>
+                            {product.image_url ? (
+                              <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                            ) : (
+                              product.department === "kitchen" 
+                                ? <UtensilsCrossed size={24} className="text-primary/70" /> 
+                                : <Wine size={24} className="text-primary/70" />
+                            )}
+                          </div>
+                          {/* Content */}
+                          <div className="flex-1 p-4 flex flex-col justify-center min-w-0">
+                            <h3 className="font-sans font-bold text-sm text-card-foreground leading-tight">{product.name}</h3>
+                            {product.description && (
+                              <p className="text-xs text-muted-foreground font-sans mt-0.5 line-clamp-1">{product.description}</p>
+                            )}
+                            <p className="text-sm font-bold text-primary font-sans mt-1.5">{formatRWF(product.price)}</p>
+                          </div>
+                          {/* Action */}
+                          <div className="flex items-center pr-4">
+                            {inCart ? (
+                              <div className="flex items-center gap-1.5">
+                                <button onClick={() => updateQuantity(product.id, -1)} className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors">
+                                  <Minus size={14} className="text-foreground" />
+                                </button>
+                                <span className="text-sm font-sans font-bold w-6 text-center text-foreground">{inCart.quantity}</span>
+                                <button onClick={() => updateQuantity(product.id, 1)} className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition-opacity">
+                                  <Plus size={14} />
+                                </button>
+                              </div>
+                            ) : (
+                              <motion.button whileTap={{ scale: 0.85 }} onClick={() => addToCart(product)}
+                                className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all hover:scale-105">
+                                <Plus size={18} />
+                              </motion.button>
+                            )}
+                          </div>
                         </div>
-                      ) : (
-                        <button onClick={() => addToCart(product)} className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center flex-shrink-0 shadow-luxury">
-                          <Plus size={18} />
-                        </button>
-                      )}
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 );
               })}
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
@@ -588,11 +653,13 @@ const Menu = () => {
 
       {/* Floating cart */}
       {cart.length > 0 && !cartOpen && (
-        <motion.button initial={{ y: 100 }} animate={{ y: 0 }} onClick={() => setCartOpen(true)}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground rounded-full px-6 py-3 shadow-luxury flex items-center gap-3 font-sans z-30">
-          <ShoppingCart size={18} />
-          <span className="font-semibold">{cart.reduce((s, i) => s + i.quantity, 0)} items</span>
-          <span className="font-bold">{formatRWF(cartTotal)}</span>
+        <motion.button initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} onClick={() => setCartOpen(true)}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground rounded-2xl px-6 py-3.5 shadow-2xl flex items-center gap-4 font-sans z-30 hover:scale-105 transition-transform">
+          <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+            {cart.reduce((s, i) => s + i.quantity, 0)}
+          </div>
+          <span className="font-semibold text-sm">View Order</span>
+          <span className="font-bold text-primary">{formatRWF(cartTotal)}</span>
         </motion.button>
       )}
     </div>
