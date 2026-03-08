@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, PackagePlus } from "lucide-react";
 import { Constants } from "@/integrations/supabase/types";
 
 const fmt = (n: number) => `RWF ${n.toLocaleString()}`;
@@ -22,6 +22,10 @@ const AdminProducts = () => {
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ name: "", price: "", category: "main_course", department: "kitchen", description: "", available: true, stock: "0" });
   const [filterDept, setFilterDept] = useState<string>("all");
+
+  // Restock dialog state
+  const [restockDialog, setRestockDialog] = useState<{ open: boolean; product: any }>({ open: false, product: null });
+  const [restockQty, setRestockQty] = useState("");
 
   const fetch = async () => {
     let q = supabase.from("products").select("*").order("department").order("name");
@@ -69,6 +73,28 @@ const AdminProducts = () => {
   const toggle = async (id: string, available: boolean) => {
     await supabase.from("products").update({ available } as any).eq("id", id);
     fetch();
+  };
+
+  const openRestock = (product: any) => {
+    setRestockQty("");
+    setRestockDialog({ open: true, product });
+  };
+
+  const confirmRestock = async () => {
+    const qty = Number(restockQty);
+    if (!qty || qty <= 0) { toast.error("Enter a valid quantity"); return; }
+    const product = restockDialog.product;
+    const newStock = (product.stock || 0) + qty;
+    const updates: any = { stock: newStock };
+    // Auto-enable if it was disabled and now has stock
+    if (!product.available && newStock > 0) updates.available = true;
+    const { error } = await supabase.from("products").update(updates).eq("id", product.id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`Restocked ${product.name}: +${qty} (now ${newStock})`);
+      fetch();
+    }
+    setRestockDialog({ open: false, product: null });
   };
 
   if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -136,6 +162,7 @@ const AdminProducts = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
+                  <Button size="sm" variant="ghost" title="Restock" onClick={() => openRestock(p)}><PackagePlus size={14} className="text-green-600" /></Button>
                   <Switch checked={p.available} onCheckedChange={v => toggle(p.id, v)} />
                   <Button size="sm" variant="ghost" onClick={() => openEdit(p)}><Pencil size={14} /></Button>
                   <Button size="sm" variant="ghost" className="text-destructive" onClick={() => del(p.id)}><Trash2 size={14} /></Button>
@@ -145,6 +172,41 @@ const AdminProducts = () => {
           </Card>
         ))}
       </div>
+
+      {/* Restock Dialog */}
+      <Dialog open={restockDialog.open} onOpenChange={(open) => setRestockDialog({ ...restockDialog, open })}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Restock — {restockDialog.product?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground font-sans">
+              Current stock: <strong>{restockDialog.product?.stock || 0}</strong>
+            </p>
+            <div>
+              <Label className="font-sans">Add Quantity</Label>
+              <Input
+                type="number"
+                min="1"
+                placeholder="e.g. 50"
+                value={restockQty}
+                onChange={(e) => setRestockQty(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => e.key === "Enter" && confirmRestock()}
+              />
+            </div>
+            {restockQty && Number(restockQty) > 0 && (
+              <p className="text-xs font-sans text-muted-foreground">
+                New stock will be: <strong className="text-foreground">{(restockDialog.product?.stock || 0) + Number(restockQty)}</strong>
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRestockDialog({ open: false, product: null })} className="font-sans">Cancel</Button>
+            <Button onClick={confirmRestock} className="font-sans">Restock</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
