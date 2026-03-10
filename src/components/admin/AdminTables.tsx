@@ -108,12 +108,15 @@ const AdminTables = () => {
                 t.status === "occupied" ? "bg-red-100 text-red-700" :
                 "bg-yellow-100 text-yellow-700"
               }`}>{t.status}</span>
-              <div className="flex gap-1 justify-center mt-2">
+              <div className="flex gap-1 justify-center mt-2 flex-wrap">
+                <Button size="sm" variant="outline" className="font-sans gap-1 text-xs" onClick={() => setQrDialog({ open: true, tableNum: t.table_number })}>
+                  <QrCode size={12} /> View QR
+                </Button>
                 <Button size="sm" variant="outline" className="font-sans gap-1 text-xs" onClick={() => {
                   navigator.clipboard.writeText(qrUrl(t.table_number));
                   toast.success("QR link copied!");
                 }}>
-                  <QrCode size={12} /> Copy QR Link
+                  Copy Link
                 </Button>
                 <Button size="sm" variant="ghost" className="text-destructive" onClick={() => del(t.id)}>
                   <Trash2 size={14} />
@@ -123,6 +126,35 @@ const AdminTables = () => {
           </Card>
         ))}
       </div>
+
+      {/* QR Code Viewer Dialog */}
+      <Dialog open={qrDialog.open} onOpenChange={(o) => setQrDialog({ ...qrDialog, open: o })}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Table {qrDialog.tableNum} — QR Code</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-3">
+            {qrDialog.tableNum && (
+              <img
+                src={qrImageUrl(qrDialog.tableNum)}
+                alt={`QR code for table ${qrDialog.tableNum}`}
+                className="w-64 h-64 rounded-md border border-border"
+              />
+            )}
+            <p className="text-xs text-muted-foreground font-sans text-center break-all">
+              {qrDialog.tableNum && qrUrl(qrDialog.tableNum)}
+            </p>
+          </div>
+          <DialogFooter className="flex-row gap-2 justify-center sm:justify-center">
+            <Button variant="outline" className="font-sans gap-1" onClick={() => qrDialog.tableNum && handleDownloadQr(qrDialog.tableNum)}>
+              <Download size={14} /> Download
+            </Button>
+            <Button className="font-sans gap-1" onClick={() => qrDialog.tableNum && handlePrintQr(qrDialog.tableNum)}>
+              <Printer size={14} /> Print
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
