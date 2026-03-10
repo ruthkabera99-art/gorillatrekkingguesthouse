@@ -6,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, QrCode } from "lucide-react";
+import { Plus, Trash2, QrCode, Download, Printer } from "lucide-react";
+import { DialogFooter } from "@/components/ui/dialog";
 
 const AdminTables = () => {
   const [tables, setTables] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ table_number: "", capacity: "4" });
+  const [qrDialog, setQrDialog] = useState<{ open: boolean; tableNum: number | null }>({ open: false, tableNum: null });
 
   const fetch = async () => {
     const { data } = await supabase.from("restaurant_tables").select("*").order("table_number");
@@ -41,6 +43,38 @@ const AdminTables = () => {
   };
 
   const qrUrl = (num: number) => `${window.location.origin}/menu?table=${num}`;
+  const qrImageUrl = (num: number) =>
+    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrUrl(num))}`;
+
+  const handlePrintQr = (tableNum: number) => {
+    const w = window.open("", "_blank", "width=400,height=500");
+    if (!w) return;
+    w.document.write(`
+      <html><head><title>Table ${tableNum} QR</title></head>
+      <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
+        <h2>Table ${tableNum}</h2>
+        <img src="${qrImageUrl(tableNum)}" width="300" height="300" />
+        <p style="margin-top:12px;color:#666;">Scan to order</p>
+        <script>window.onload=()=>{ window.print(); }</script>
+      </body></html>
+    `);
+    w.document.close();
+  };
+
+  const handleDownloadQr = async (tableNum: number) => {
+    try {
+      const res = await window.fetch(qrImageUrl(tableNum));
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `table-${tableNum}-qr.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Failed to download QR code");
+    }
+  };
 
   if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
@@ -74,12 +108,15 @@ const AdminTables = () => {
                 t.status === "occupied" ? "bg-red-100 text-red-700" :
                 "bg-yellow-100 text-yellow-700"
               }`}>{t.status}</span>
-              <div className="flex gap-1 justify-center mt-2">
+              <div className="flex gap-1 justify-center mt-2 flex-wrap">
+                <Button size="sm" variant="outline" className="font-sans gap-1 text-xs" onClick={() => setQrDialog({ open: true, tableNum: t.table_number })}>
+                  <QrCode size={12} /> View QR
+                </Button>
                 <Button size="sm" variant="outline" className="font-sans gap-1 text-xs" onClick={() => {
                   navigator.clipboard.writeText(qrUrl(t.table_number));
                   toast.success("QR link copied!");
                 }}>
-                  <QrCode size={12} /> Copy QR Link
+                  Copy Link
                 </Button>
                 <Button size="sm" variant="ghost" className="text-destructive" onClick={() => del(t.id)}>
                   <Trash2 size={14} />
@@ -89,6 +126,35 @@ const AdminTables = () => {
           </Card>
         ))}
       </div>
+
+      {/* QR Code Viewer Dialog */}
+      <Dialog open={qrDialog.open} onOpenChange={(o) => setQrDialog({ ...qrDialog, open: o })}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Table {qrDialog.tableNum} — QR Code</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-3">
+            {qrDialog.tableNum && (
+              <img
+                src={qrImageUrl(qrDialog.tableNum)}
+                alt={`QR code for table ${qrDialog.tableNum}`}
+                className="w-64 h-64 rounded-md border border-border"
+              />
+            )}
+            <p className="text-xs text-muted-foreground font-sans text-center break-all">
+              {qrDialog.tableNum && qrUrl(qrDialog.tableNum)}
+            </p>
+          </div>
+          <DialogFooter className="flex-row gap-2 justify-center sm:justify-center">
+            <Button variant="outline" className="font-sans gap-1" onClick={() => qrDialog.tableNum && handleDownloadQr(qrDialog.tableNum)}>
+              <Download size={14} /> Download
+            </Button>
+            <Button className="font-sans gap-1" onClick={() => qrDialog.tableNum && handlePrintQr(qrDialog.tableNum)}>
+              <Printer size={14} /> Print
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
