@@ -6,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, QrCode } from "lucide-react";
+import { Plus, Trash2, QrCode, Download, Printer } from "lucide-react";
+import { DialogFooter } from "@/components/ui/dialog";
 
 const AdminTables = () => {
   const [tables, setTables] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ table_number: "", capacity: "4" });
+  const [qrDialog, setQrDialog] = useState<{ open: boolean; tableNum: number | null }>({ open: false, tableNum: null });
 
   const fetch = async () => {
     const { data } = await supabase.from("restaurant_tables").select("*").order("table_number");
