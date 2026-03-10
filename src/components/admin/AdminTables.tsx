@@ -43,6 +43,38 @@ const AdminTables = () => {
   };
 
   const qrUrl = (num: number) => `${window.location.origin}/menu?table=${num}`;
+  const qrImageUrl = (num: number) =>
+    `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrUrl(num))}`;
+
+  const handlePrintQr = (tableNum: number) => {
+    const w = window.open("", "_blank", "width=400,height=500");
+    if (!w) return;
+    w.document.write(`
+      <html><head><title>Table ${tableNum} QR</title></head>
+      <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
+        <h2>Table ${tableNum}</h2>
+        <img src="${qrImageUrl(tableNum)}" width="300" height="300" />
+        <p style="margin-top:12px;color:#666;">Scan to order</p>
+        <script>window.onload=()=>{ window.print(); }</script>
+      </body></html>
+    `);
+    w.document.close();
+  };
+
+  const handleDownloadQr = async (tableNum: number) => {
+    try {
+      const res = await window.fetch(qrImageUrl(tableNum));
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `table-${tableNum}-qr.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Failed to download QR code");
+    }
+  };
 
   if (loading) return <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
