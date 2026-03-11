@@ -29,6 +29,12 @@ const Navbar = () => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
   return (
     <motion.header
       initial={{ y: -100 }}
@@ -38,10 +44,12 @@ const Navbar = () => {
         scrolled ? "bg-card/90 backdrop-blur-lg shadow-lg border-b border-border" : "bg-transparent"
       }`}
     >
-      <nav className="container mx-auto flex items-center justify-between px-6 py-4">
-        <Link to="/" className="font-serif text-lg md:text-xl font-bold tracking-wider text-primary leading-tight">GORILLA TREKKING<span className="block text-xs tracking-[0.2em]">GUEST HOUSE</span></Link>
+      <nav className="container mx-auto flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+        <Link to="/" className="font-serif text-base sm:text-lg md:text-xl font-bold tracking-wider text-primary leading-tight">
+          GORILLA TREKKING<span className="block text-[10px] sm:text-xs tracking-[0.2em]">GUEST HOUSE</span>
+        </Link>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-6 lg:gap-8">
           {navLinks.map((l) => (
             "isRoute" in l && l.isRoute ? (
               <Link key={l.label} to={l.href} className="text-sm font-medium tracking-wide text-foreground/80 hover:text-primary transition-colors">{l.label}</Link>
@@ -72,11 +80,11 @@ const Navbar = () => {
           </Link>
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
-          <button onClick={() => setDark(!dark)} className="p-2 rounded-full hover:bg-muted transition-colors text-foreground/70" aria-label="Toggle theme">
-            {dark ? <Sun size={18} /> : <Moon size={18} />}
+        <div className="flex items-center gap-1 md:hidden">
+          <button onClick={() => setDark(!dark)} className="p-2.5 rounded-full hover:bg-muted transition-colors text-foreground/70 active:scale-95" aria-label="Toggle theme">
+            {dark ? <Sun size={20} /> : <Moon size={20} />}
           </button>
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="text-foreground" aria-label="Menu">
+          <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2.5 rounded-full hover:bg-muted transition-colors text-foreground active:scale-95" aria-label="Menu">
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -84,27 +92,57 @@ const Navbar = () => {
 
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="md:hidden bg-card/95 backdrop-blur-lg border-b border-border">
-            <div className="flex flex-col items-center gap-4 py-6">
-              {navLinks.map((l) => (
-                "isRoute" in l && l.isRoute ? (
-                  <Link key={l.label} to={l.href} onClick={() => setMobileOpen(false)} className="text-sm font-medium tracking-wide text-foreground/80 hover:text-primary transition-colors">{l.label}</Link>
-                ) : (
-                  <a key={l.label} href={l.href} onClick={() => setMobileOpen(false)} className="text-sm font-medium tracking-wide text-foreground/80 hover:text-primary transition-colors">{l.label}</a>
-                )
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="md:hidden bg-card/98 backdrop-blur-xl border-b border-border"
+          >
+            <div className="flex flex-col items-center gap-1 py-4 px-6">
+              {navLinks.map((l, i) => (
+                <motion.div
+                  key={l.label}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="w-full"
+                >
+                  {"isRoute" in l && l.isRoute ? (
+                    <Link
+                      to={l.href}
+                      onClick={() => setMobileOpen(false)}
+                      className="block w-full text-center py-3 text-base font-medium tracking-wide text-foreground/80 hover:text-primary hover:bg-primary/5 rounded-xl transition-all active:scale-[0.98]"
+                    >
+                      {l.label}
+                    </Link>
+                  ) : (
+                    <a
+                      href={l.href}
+                      onClick={() => setMobileOpen(false)}
+                      className="block w-full text-center py-3 text-base font-medium tracking-wide text-foreground/80 hover:text-primary hover:bg-primary/5 rounded-xl transition-all active:scale-[0.98]"
+                    >
+                      {l.label}
+                    </a>
+                  )}
+                </motion.div>
               ))}
-              {user ? (
-                <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
-                  <Button size="sm" variant="outline" className="font-sans gap-2"><User size={16} /> Dashboard</Button>
+              <div className="flex flex-col items-center gap-3 w-full mt-3 pt-3 border-t border-border">
+                {user ? (
+                  <Link to="/dashboard" onClick={() => setMobileOpen(false)} className="w-full">
+                    <Button size="lg" variant="outline" className="w-full font-sans gap-2 py-3">
+                      <User size={16} /> Dashboard
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to="/auth" onClick={() => setMobileOpen(false)} className="w-full">
+                    <Button size="lg" variant="outline" className="w-full font-sans py-3">Sign In</Button>
+                  </Link>
+                )}
+                <Link to="/rooms" onClick={() => setMobileOpen(false)} className="w-full">
+                  <Button size="lg" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans py-3">Book Now</Button>
                 </Link>
-              ) : (
-                <Link to="/auth" onClick={() => setMobileOpen(false)}>
-                  <Button size="sm" variant="outline" className="font-sans">Sign In</Button>
-                </Link>
-              )}
-              <Link to="/rooms" onClick={() => setMobileOpen(false)}>
-                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 font-sans">Book Now</Button>
-              </Link>
+              </div>
             </div>
           </motion.div>
         )}
