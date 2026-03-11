@@ -4,18 +4,20 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import Rooms from "./pages/Rooms";
-import RoomDetail from "./pages/RoomDetail";
-import Dashboard from "./pages/Dashboard";
-import Menu from "./pages/Menu";
-import KitchenDashboard from "./pages/KitchenDashboard";
-import BarDashboard from "./pages/BarDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import NotFound from "./pages/NotFound";
+import { lazy, Suspense } from "react";
+
+const Index = lazy(() => import("./pages/Index"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Rooms = lazy(() => import("./pages/Rooms"));
+const RoomDetail = lazy(() => import("./pages/RoomDetail"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Menu = lazy(() => import("./pages/Menu"));
+const KitchenDashboard = lazy(() => import("./pages/KitchenDashboard"));
+const BarDashboard = lazy(() => import("./pages/BarDashboard"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
