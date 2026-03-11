@@ -51,19 +51,19 @@ const item = {
 
 const RoomShowcase = () => {
   return (
-    <section id="rooms" className="py-24 bg-background">
-      <div className="container mx-auto px-6">
+    <section id="rooms" className="py-16 sm:py-24 bg-background">
+      <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
         >
-          <p className="text-sm tracking-[0.3em] uppercase text-primary font-sans mb-3">
+          <p className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary font-sans mb-2 sm:mb-3">
             Accommodations
           </p>
-          <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-serif font-bold text-foreground">
             Our Finest Rooms
           </h2>
         </motion.div>
@@ -72,13 +72,13 @@ const RoomShowcase = () => {
           variants={container}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
         >
           {rooms.map((room) => (
             <motion.div key={room.type} variants={item}>
               <Card className="group overflow-hidden border-0 shadow-luxury hover:shadow-2xl transition-all duration-500 bg-card">
-                <div className="relative h-64 overflow-hidden">
+                <div className="relative h-48 sm:h-64 overflow-hidden">
                   <img
                     src={room.image}
                     alt={`${room.type} room`}
@@ -86,21 +86,21 @@ const RoomShowcase = () => {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  <div className="absolute bottom-4 left-4 flex items-center gap-1 text-white">
+                  <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 flex items-center gap-1 text-white">
                     <Star size={14} className="fill-primary text-primary" />
                     <span className="text-sm font-sans">{room.rating}</span>
                   </div>
                 </div>
-                <CardContent className="p-5">
-                  <h3 className="font-serif text-xl font-semibold text-card-foreground mb-1">
+                <CardContent className="p-4 sm:p-5">
+                  <h3 className="font-serif text-lg sm:text-xl font-semibold text-card-foreground mb-1">
                     {room.type}
                   </h3>
-                  <p className="text-sm text-muted-foreground font-sans mb-4 line-clamp-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground font-sans mb-3 sm:mb-4 line-clamp-2">
                     {room.description}
                   </p>
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-xl font-bold text-primary font-sans">RWF {room.price.toLocaleString()}</span>
+                      <span className="text-lg sm:text-xl font-bold text-primary font-sans">RWF {room.price.toLocaleString()}</span>
                       <span className="text-xs text-muted-foreground font-sans"> / night</span>
                     </div>
                     <div className="flex items-center gap-1 text-muted-foreground">
@@ -109,7 +109,7 @@ const RoomShowcase = () => {
                     </div>
                   </div>
                   <Link to="/rooms">
-                    <Button className="w-full mt-4 bg-secondary text-secondary-foreground hover:bg-secondary/90 font-sans tracking-wide">
+                    <Button className="w-full mt-3 sm:mt-4 bg-secondary text-secondary-foreground hover:bg-secondary/90 font-sans tracking-wide py-2.5 active:scale-[0.98] transition-transform">
                       View Details
                     </Button>
                   </Link>

@@ -24,19 +24,19 @@ const item = {
 
 const Amenities = () => {
   return (
-    <section id="amenities" className="py-24 bg-muted/50">
-      <div className="container mx-auto px-6">
+    <section id="amenities" className="py-16 sm:py-24 bg-muted/50">
+      <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
         >
-          <p className="text-sm tracking-[0.3em] uppercase text-primary font-sans mb-3">
+          <p className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary font-sans mb-2 sm:mb-3">
             World-Class
           </p>
-          <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-serif font-bold text-foreground">
             Hotel Amenities
           </h2>
         </motion.div>
@@ -46,21 +46,22 @@ const Amenities = () => {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-6"
         >
           {amenities.map((a) => (
             <motion.div
               key={a.label}
               variants={item}
-              className="group glass rounded-xl p-6 text-center hover:shadow-luxury transition-all duration-500 cursor-default bg-card border border-border"
+              className="group rounded-xl p-4 sm:p-6 text-center hover:shadow-luxury transition-all duration-500 cursor-default bg-card border border-border active:scale-[0.97]"
             >
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
-                <a.icon size={26} className="text-primary" />
+              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:bg-primary/20 transition-colors">
+                <a.icon size={22} className="text-primary sm:hidden" />
+                <a.icon size={26} className="text-primary hidden sm:block" />
               </div>
-              <h3 className="font-serif text-lg font-semibold text-card-foreground mb-1">
+              <h3 className="font-serif text-sm sm:text-lg font-semibold text-card-foreground mb-0.5 sm:mb-1">
                 {a.label}
               </h3>
-              <p className="text-sm text-muted-foreground font-sans">{a.desc}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground font-sans">{a.desc}</p>
             </motion.div>
           ))}
         </motion.div>

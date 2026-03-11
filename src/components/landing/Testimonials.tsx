@@ -38,19 +38,19 @@ const Testimonials = () => {
   const review = reviews[current];
 
   return (
-    <section id="reviews" className="py-24 bg-background">
-      <div className="container mx-auto px-6">
+    <section id="reviews" className="py-16 sm:py-24 bg-background">
+      <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
         >
-          <p className="text-sm tracking-[0.3em] uppercase text-primary font-sans mb-3">
+          <p className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary font-sans mb-2 sm:mb-3">
             Guest Experiences
           </p>
-          <h2 className="text-3xl md:text-5xl font-serif font-bold text-foreground">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-serif font-bold text-foreground">
             What Our Guests Say
           </h2>
         </motion.div>
@@ -63,30 +63,30 @@ const Testimonials = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.4 }}
-              className="text-center"
+              className="text-center px-2"
             >
-              <Quote size={40} className="text-primary/30 mx-auto mb-6" />
-              <p className="text-lg md:text-xl text-foreground/90 font-sans font-light leading-relaxed mb-8 italic">
+              <Quote size={32} className="text-primary/30 mx-auto mb-4 sm:mb-6 sm:w-10 sm:h-10" />
+              <p className="text-base sm:text-lg md:text-xl text-foreground/90 font-sans font-light leading-relaxed mb-6 sm:mb-8 italic">
                 "{review.text}"
               </p>
-              <div className="flex items-center justify-center gap-1 mb-3">
+              <div className="flex items-center justify-center gap-1 mb-2 sm:mb-3">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
-                    size={16}
+                    size={14}
                     className={i < review.rating ? "fill-primary text-primary" : "text-muted-foreground/30"}
                   />
                 ))}
               </div>
-              <p className="font-serif text-lg font-semibold text-foreground">{review.name}</p>
-              <p className="text-sm text-muted-foreground font-sans">{review.location}</p>
+              <p className="font-serif text-base sm:text-lg font-semibold text-foreground">{review.name}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground font-sans">{review.location}</p>
             </motion.div>
           </AnimatePresence>
 
-          <div className="flex items-center justify-center gap-4 mt-10">
+          <div className="flex items-center justify-center gap-4 mt-8 sm:mt-10">
             <button
               onClick={prev}
-              className="p-3 rounded-full border border-border hover:bg-muted transition-colors text-foreground/60 hover:text-foreground"
+              className="p-2.5 sm:p-3 rounded-full border border-border hover:bg-muted transition-colors text-foreground/60 hover:text-foreground active:scale-95"
               aria-label="Previous review"
             >
               <ChevronLeft size={20} />
@@ -96,8 +96,8 @@ const Testimonials = () => {
                 <button
                   key={i}
                   onClick={() => setCurrent(i)}
-                  className={`w-2.5 h-2.5 rounded-full transition-all ${
-                    i === current ? "bg-primary w-6" : "bg-muted-foreground/30"
+                  className={`h-2.5 rounded-full transition-all ${
+                    i === current ? "bg-primary w-6" : "bg-muted-foreground/30 w-2.5"
                   }`}
                   aria-label={`Go to review ${i + 1}`}
                 />
@@ -105,7 +105,7 @@ const Testimonials = () => {
             </div>
             <button
               onClick={next}
-              className="p-3 rounded-full border border-border hover:bg-muted transition-colors text-foreground/60 hover:text-foreground"
+              className="p-2.5 sm:p-3 rounded-full border border-border hover:bg-muted transition-colors text-foreground/60 hover:text-foreground active:scale-95"
               aria-label="Next review"
             >
               <ChevronRight size={20} />
