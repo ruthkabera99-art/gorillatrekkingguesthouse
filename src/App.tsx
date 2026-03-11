@@ -28,20 +28,22 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/rooms" element={<Rooms />} />
-            <Route path="/rooms/:id" element={<RoomDetail />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/menu" element={<Menu />} />
-            <Route path="/kitchen" element={<KitchenDashboard />} />
-            <Route path="/bar" element={<BarDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<div className="min-h-screen bg-background" />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/rooms" element={<Rooms />} />
+              <Route path="/rooms/:id" element={<RoomDetail />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/menu" element={<Menu />} />
+              <Route path="/kitchen" element={<KitchenDashboard />} />
+              <Route path="/bar" element={<BarDashboard />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
