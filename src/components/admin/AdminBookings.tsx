@@ -56,7 +56,7 @@ const AdminBookings = () => {
       .order("created_at", { ascending: false });
 
     if (filter !== "all") {
-      query = query.eq("status", filter);
+      query = query.eq("status", filter as "pending" | "confirmed" | "cancelled" | "completed");
     }
 
     const { data, error } = await query;
