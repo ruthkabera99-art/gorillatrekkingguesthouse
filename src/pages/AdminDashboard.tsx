@@ -87,6 +87,7 @@ const AdminDashboard = () => {
       case "bar": return <AdminBar />;
       case "invoices": return <AdminInvoices />;
       case "rooms": return <AdminRooms />;
+      case "bookings": return <AdminBookings />;
       case "products": return <AdminProducts />;
       case "tables": return <AdminTables />;
       case "promotions": return <AdminPromotions />;
