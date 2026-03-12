@@ -39,6 +39,7 @@ const tabs = [
   { key: "bar", label: "Bar", icon: Wine },
   { key: "invoices", label: "Invoices & Billing", icon: Receipt },
   { key: "rooms", label: "Rooms", icon: BedDouble },
+  { key: "bookings", label: "Bookings", icon: CalendarDays },
   { key: "products", label: "Menu Products", icon: UtensilsCrossed },
   { key: "tables", label: "Tables", icon: BarChart3 },
   { key: "promotions", label: "Promotions", icon: Tag },
