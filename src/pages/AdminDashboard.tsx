@@ -17,7 +17,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import {
   LayoutDashboard, ShoppingCart, Receipt, BedDouble, UtensilsCrossed,
-  Settings, Users, Tag, ChefHat, Wine, LogOut, BarChart3
+  Settings, Users, Tag, ChefHat, Wine, LogOut, BarChart3, CalendarDays
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdminOverview from "@/components/admin/AdminOverview";
@@ -30,6 +30,7 @@ import AdminPromotions from "@/components/admin/AdminPromotions";
 import AdminSettings from "@/components/admin/AdminSettings";
 import AdminKitchen from "@/components/admin/AdminKitchen";
 import AdminBar from "@/components/admin/AdminBar";
+import AdminBookings from "@/components/admin/AdminBookings";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
@@ -38,6 +39,7 @@ const tabs = [
   { key: "bar", label: "Bar", icon: Wine },
   { key: "invoices", label: "Invoices & Billing", icon: Receipt },
   { key: "rooms", label: "Rooms", icon: BedDouble },
+  { key: "bookings", label: "Bookings", icon: CalendarDays },
   { key: "products", label: "Menu Products", icon: UtensilsCrossed },
   { key: "tables", label: "Tables", icon: BarChart3 },
   { key: "promotions", label: "Promotions", icon: Tag },
@@ -85,6 +87,7 @@ const AdminDashboard = () => {
       case "bar": return <AdminBar />;
       case "invoices": return <AdminInvoices />;
       case "rooms": return <AdminRooms />;
+      case "bookings": return <AdminBookings />;
       case "products": return <AdminProducts />;
       case "tables": return <AdminTables />;
       case "promotions": return <AdminPromotions />;
