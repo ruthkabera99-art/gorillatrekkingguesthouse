@@ -10,9 +10,16 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Upload, X, Image as ImageIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const fmt = (n: number) => `RWF ${n.toLocaleString()}`;
 const ROOM_TYPES = ["standard", "deluxe", "executive", "presidential"] as const;
+
+const AVAILABLE_AMENITIES = [
+  "WiFi", "AC", "TV", "Mini Bar", "Room Service", "Hot Water",
+  "Balcony", "Safe Box", "Hair Dryer", "Iron", "Coffee Maker",
+  "Bathtub", "Mountain View", "Parking", "Breakfast Included",
+];
 
 const DEFAULT_ROOM_IMAGES: Record<string, string> = {
   standard: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&h=300&fit=crop",
@@ -27,6 +34,7 @@ const AdminRooms = () => {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ name: "", type: "standard", base_price: "", capacity: "2", description: "", status: "available" });
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,6 +49,7 @@ const AdminRooms = () => {
   const openEdit = (room: any) => {
     setEditing(room);
     setForm({ name: room.name, type: room.type, base_price: String(room.base_price), capacity: String(room.capacity), description: room.description || "", status: room.status });
+    setSelectedAmenities(room.amenities || []);
     setUploadedImages(room.images || []);
     setOpen(true);
   };
@@ -48,28 +57,30 @@ const AdminRooms = () => {
   const openNew = () => {
     setEditing(null);
     setForm({ name: "", type: "standard", base_price: "", capacity: "2", description: "", status: "available" });
+    setSelectedAmenities([]);
     setUploadedImages([]);
     setOpen(true);
+  };
+
+  const toggleAmenity = (amenity: string) => {
+    setSelectedAmenities(prev =>
+      prev.includes(amenity) ? prev.filter(a => a !== amenity) : [...prev, amenity]
+    );
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setUploading(true);
-    
     const newUrls: string[] = [];
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop();
       const filePath = `${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage.from("room-images").upload(filePath, file);
-      if (error) {
-        toast.error(`Failed to upload ${file.name}`);
-        continue;
-      }
+      if (error) { toast.error(`Failed to upload ${file.name}`); continue; }
       const { data: urlData } = supabase.storage.from("room-images").getPublicUrl(filePath);
       newUrls.push(urlData.publicUrl);
     }
-    
     setUploadedImages(prev => [...prev, ...newUrls]);
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -89,6 +100,7 @@ const AdminRooms = () => {
       description: form.description || null,
       status: form.status,
       images,
+      amenities: selectedAmenities,
     };
     if (editing) {
       const { error } = await supabase.from("rooms").update(payload).eq("id", editing.id);
@@ -150,42 +162,42 @@ const AdminRooms = () => {
                 </Select>
               </div>
               <div><Label className="font-sans">Description</Label><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
-              
-              {/* Image Upload Section */}
+
+              {/* Amenities */}
+              <div className="space-y-2">
+                <Label className="font-sans">Amenities</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {AVAILABLE_AMENITIES.map(amenity => (
+                    <label key={amenity} className="flex items-center gap-2 text-sm font-sans cursor-pointer hover:text-primary transition-colors">
+                      <Checkbox
+                        checked={selectedAmenities.includes(amenity)}
+                        onCheckedChange={() => toggleAmenity(amenity)}
+                      />
+                      {amenity}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Image Upload */}
               <div className="space-y-2">
                 <Label className="font-sans">Room Images</Label>
                 <div className="grid grid-cols-3 gap-2">
                   {uploadedImages.map((url, i) => (
                     <div key={i} className="relative group rounded-md overflow-hidden border border-border aspect-video">
                       <img src={url} alt="" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(i)}
-                        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
+                      <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <X size={12} />
                       </button>
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    className="border-2 border-dashed border-border rounded-md aspect-video flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer"
-                  >
-                    {uploading ? (
-                      <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <Upload size={16} />
-                        <span className="text-xs font-sans">Upload</span>
-                      </>
-                    )}
+                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="border-2 border-dashed border-border rounded-md aspect-video flex flex-col items-center justify-center gap-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
+                    {uploading ? <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" /> : <><Upload size={16} /><span className="text-xs font-sans">Upload</span></>}
                   </button>
                 </div>
                 <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
                 <p className="text-xs text-muted-foreground font-sans">
-                  {uploadedImages.length === 0 ? "A default image will be used based on room type if none uploaded." : `${uploadedImages.length} image(s) added`}
+                  {uploadedImages.length === 0 ? "Default image used if none uploaded." : `${uploadedImages.length} image(s)`}
                 </p>
               </div>
 
@@ -209,10 +221,12 @@ const AdminRooms = () => {
                   <p className="font-sans font-bold text-foreground truncate">{r.name}</p>
                   <p className="text-sm text-muted-foreground font-sans capitalize">{r.type} · {r.capacity} guests</p>
                   <p className="text-sm font-sans text-primary font-bold">{fmt(Number(r.base_price))}/night</p>
-                  {r.images && r.images.length > 0 && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <ImageIcon size={10} className="text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">{r.images.length} photo(s)</span>
+                  {r.amenities && r.amenities.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {r.amenities.slice(0, 3).map((a: string) => (
+                        <span key={a} className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded font-sans">{a}</span>
+                      ))}
+                      {r.amenities.length > 3 && <span className="text-[10px] text-muted-foreground font-sans">+{r.amenities.length - 3}</span>}
                     </div>
                   )}
                 </div>
