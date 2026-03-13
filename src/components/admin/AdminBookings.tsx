@@ -72,9 +72,9 @@ const sendBookingSMS = async (guestPhone: string, guestName: string, roomName: s
 };
 
 // Check notification settings
-const getNotificationSettings = async () => {
+const getNotificationSettings = async (): Promise<Record<string, any>> => {
   const { data } = await supabase.from("site_settings").select("value").eq("key", "notifications").single();
-  return data?.value || {};
+  return (data?.value as Record<string, any>) || {};
 };
 
 const AdminBookings = () => {
