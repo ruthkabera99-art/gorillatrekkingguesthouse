@@ -98,6 +98,22 @@ const Rooms = () => {
       toast.error(error.message);
     } else {
       toast.success("Booking submitted! You'll receive a confirmation soon.");
+      // Trigger SMS notification for new booking
+      try {
+        const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("user_id", user.id).single();
+        const { data: notifSettings } = await supabase.from("site_settings").select("value").eq("key", "notifications").single();
+        const settings = (notifSettings?.value as Record<string, any>) || {};
+        if (profile?.phone && settings.sms_on_booking_created) {
+          await supabase.functions.invoke("send-booking-sms", {
+            body: {
+              to: profile.phone,
+              message: `Hello ${profile.full_name || "Guest"}, your booking at Gorilla Trekking Guest House for ${bookingRoom.name} (${checkIn} to ${checkOut}) has been received. We'll confirm shortly!`,
+            },
+          });
+        }
+      } catch (e) {
+        console.log("SMS notification skipped:", e);
+      }
       setBookingRoom(null);
     }
     setSubmitting(false);

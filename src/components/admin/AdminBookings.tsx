@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Eye, CalendarDays, Users, Phone, Mail, Clock } from "lucide-react";
+import { Eye, CalendarDays, Users, Phone, Mail, Clock, Bell, MessageSquare } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 
 type BookingWithRoom = {
@@ -38,6 +38,43 @@ const statusColors: Record<string, string> = {
   confirmed: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   cancelled: "bg-destructive/10 text-destructive border-destructive/20",
   completed: "bg-green-500/10 text-green-500 border-green-500/20",
+};
+
+// Send SMS notification helper
+const sendBookingSMS = async (guestPhone: string, guestName: string, roomName: string, status: string, checkIn: string, checkOut: string) => {
+  const messages: Record<string, string> = {
+    pending: `Hello ${guestName}, your booking at Gorilla Trekking Guest House for ${roomName} (${checkIn} to ${checkOut}) has been received. We'll confirm shortly!`,
+    confirmed: `Great news ${guestName}! Your booking for ${roomName} at Gorilla Trekking Guest House (${checkIn} to ${checkOut}) is CONFIRMED. We look forward to welcoming you!`,
+    cancelled: `Dear ${guestName}, your booking for ${roomName} (${checkIn} to ${checkOut}) at Gorilla Trekking Guest House has been cancelled. Contact us for questions.`,
+    completed: `Thank you ${guestName} for staying at Gorilla Trekking Guest House! We hope you enjoyed your time in ${roomName}. We'd love to see you again!`,
+  };
+
+  const message = messages[status];
+  if (!message) return;
+
+  try {
+    const { data, error } = await supabase.functions.invoke("send-booking-sms", {
+      body: { to: guestPhone, message },
+    });
+
+    if (error) {
+      console.error("SMS invoke error:", error);
+      toast.error("Failed to send SMS notification");
+    } else if (data?.success) {
+      toast.success("SMS notification sent to guest");
+    } else if (data?.error) {
+      console.log("SMS skipped:", data.error);
+      // Don't show error toast if Twilio isn't configured - it's expected
+    }
+  } catch (err) {
+    console.error("SMS error:", err);
+  }
+};
+
+// Check notification settings
+const getNotificationSettings = async (): Promise<Record<string, any>> => {
+  const { data } = await supabase.from("site_settings").select("value").eq("key", "notifications").single();
+  return (data?.value as Record<string, any>) || {};
 };
 
 const AdminBookings = () => {
@@ -73,22 +110,55 @@ const AdminBookings = () => {
     setGuestEmail(null);
     setDetailOpen(true);
 
-    // Fetch guest profile
     const { data: profile } = await supabase
       .from("profiles")
       .select("full_name, phone, avatar_url")
       .eq("user_id", booking.user_id)
       .single();
     setGuestProfile(profile);
-
-    // Fetch guest email from auth (via edge function or just show user_id)
-    // We'll show what we have from profiles
   };
 
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("bookings").update({ status } as any).eq("id", id);
     if (error) { toast.error(error.message); return; }
-    toast.success(`Booking ${status}`);
+
+    const booking = bookings.find(b => b.id === id) || selectedBooking;
+
+    // In-app notification
+    const settings = await getNotificationSettings();
+    if (settings.in_app_notifications !== false) {
+      toast.success(`Booking ${status}`, {
+        description: `${booking?.rooms?.name || "Room"} - ${booking ? format(new Date(booking.check_in), "MMM dd") : ""} → ${booking ? format(new Date(booking.check_out), "MMM dd") : ""}`,
+        icon: <Bell size={16} />,
+      });
+    }
+
+    // SMS notification
+    if (booking) {
+      const shouldSendSMS =
+        (status === "confirmed" && settings.sms_on_booking_confirmed) ||
+        (status === "cancelled" && settings.sms_on_booking_cancelled);
+
+      if (shouldSendSMS) {
+        // Fetch guest phone
+        const { data: guestProf } = await supabase.from("profiles")
+          .select("full_name, phone").eq("user_id", booking.user_id).single();
+
+        if (guestProf?.phone) {
+          await sendBookingSMS(
+            guestProf.phone,
+            guestProf.full_name || "Guest",
+            booking.rooms?.name || "Room",
+            status,
+            format(new Date(booking.check_in), "MMM dd, yyyy"),
+            format(new Date(booking.check_out), "MMM dd, yyyy")
+          );
+        } else {
+          toast.info("Guest has no phone number on file - SMS skipped");
+        }
+      }
+    }
+
     fetchBookings();
     if (selectedBooking?.id === id) {
       setSelectedBooking(prev => prev ? { ...prev, status: status as any } : null);
@@ -274,6 +344,37 @@ const AdminBookings = () => {
                   <CardContent className="p-3">
                     <p className="text-xs text-muted-foreground font-sans mb-1">Special Requests</p>
                     <p className="text-sm text-foreground font-sans">{selectedBooking.special_requests}</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* SMS Quick Send */}
+              {guestProfile?.phone && (
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare size={14} className="text-primary" />
+                        <span className="font-sans text-xs text-foreground">Quick SMS to {guestProfile.phone}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs font-sans h-7"
+                        onClick={async () => {
+                          await sendBookingSMS(
+                            guestProfile.phone!,
+                            guestProfile.full_name || "Guest",
+                            selectedBooking.rooms?.name || "Room",
+                            selectedBooking.status,
+                            format(new Date(selectedBooking.check_in), "MMM dd, yyyy"),
+                            format(new Date(selectedBooking.check_out), "MMM dd, yyyy")
+                          );
+                        }}
+                      >
+                        <Bell size={12} className="mr-1" /> Send SMS
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               )}
