@@ -1,70 +1,79 @@
 import { motion } from "framer-motion";
-import { Wifi, Waves, Sparkles, UtensilsCrossed, Dumbbell, Car, Coffee, Shield } from "lucide-react";
+import {
+  Wifi,
+  Waves,
+  Sparkles,
+  UtensilsCrossed,
+  Dumbbell,
+  Car,
+  Coffee,
+  Shield,
+} from "lucide-react";
 
 const amenities = [
   { icon: Wifi, label: "Free WiFi", desc: "High-speed throughout" },
-  { icon: Waves, label: "Infinity Pool", desc: "Rooftop panoramic views" },
+  { icon: Waves, label: "Infinity Pool", desc: "Panoramic mountain views" },
   { icon: Sparkles, label: "Luxury Spa", desc: "World-class treatments" },
-  { icon: UtensilsCrossed, label: "Fine Dining", desc: "Michelin-star chefs" },
-  { icon: Dumbbell, label: "Fitness Center", desc: "State-of-the-art equipment" },
-  { icon: Car, label: "Valet Parking", desc: "Complimentary service" },
+  { icon: UtensilsCrossed, label: "Fine Dining", desc: "Local & international cuisine" },
+  { icon: Dumbbell, label: "Fitness Center", desc: "Modern equipment" },
+  { icon: Car, label: "Free Parking", desc: "Secure on-site parking" },
   { icon: Coffee, label: "Lounge Bar", desc: "Signature cocktails" },
   { icon: Shield, label: "24/7 Security", desc: "Your safety first" },
 ];
 
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08 } },
-};
-
-const item = {
-  hidden: { opacity: 0, scale: 0.8 },
-  show: { opacity: 1, scale: 1, transition: { duration: 0.5 } },
-};
-
 const Amenities = () => {
   return (
-    <section id="amenities" className="py-16 sm:py-24 bg-muted/50">
-      <div className="container mx-auto px-4 sm:px-6">
+    <section id="amenities" className="relative py-20 sm:py-32 overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <img
+          src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1920&q=80"
+          alt="Hotel interior"
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-secondary/90 backdrop-blur-sm" />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-10 sm:mb-16"
+          className="text-center mb-14 sm:mb-20"
         >
-          <p className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary font-sans mb-2 sm:mb-3">
+          <p className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary font-sans mb-3">
             World-Class
           </p>
-          <h2 className="text-2xl sm:text-3xl md:text-5xl font-serif font-bold text-foreground">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-secondary-foreground mb-4">
             Hotel Amenities
           </h2>
+          <div className="w-16 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent mx-auto" />
         </motion.div>
 
-        <motion.div
-          variants={container}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-6"
-        >
-          {amenities.map((a) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-5xl mx-auto">
+          {amenities.map((a, i) => (
             <motion.div
               key={a.label}
-              variants={item}
-              className="group rounded-xl p-4 sm:p-6 text-center hover:shadow-luxury transition-all duration-500 cursor-default bg-card border border-border active:scale-[0.97]"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.07, duration: 0.5 }}
+              className="group glass rounded-2xl p-5 sm:p-7 text-center hover:bg-white/20 transition-all duration-500 cursor-default"
             >
-              <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 sm:mb-4 group-hover:bg-primary/20 transition-colors">
-                <a.icon size={22} className="text-primary sm:hidden" />
-                <a.icon size={26} className="text-primary hidden sm:block" />
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-primary/15 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/25 group-hover:scale-110 transition-all duration-300">
+                <a.icon size={26} className="text-primary" />
               </div>
-              <h3 className="font-serif text-sm sm:text-lg font-semibold text-card-foreground mb-0.5 sm:mb-1">
+              <h3 className="font-serif text-sm sm:text-base font-semibold text-secondary-foreground mb-1">
                 {a.label}
               </h3>
-              <p className="text-xs sm:text-sm text-muted-foreground font-sans">{a.desc}</p>
+              <p className="text-xs sm:text-sm text-secondary-foreground/60 font-sans">
+                {a.desc}
+              </p>
             </motion.div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );
