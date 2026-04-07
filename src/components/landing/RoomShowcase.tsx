@@ -1,22 +1,21 @@
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Star } from "lucide-react";
+import { Users, Star, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const rooms = [
   {
     type: "Standard",
     price: 45000,
-    image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&q=80",
+    image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80",
     capacity: 2,
     rating: 4.5,
-    description: "Comfortable elegance with city views and modern amenities.",
+    description: "Comfortable elegance with mountain views and modern amenities.",
   },
   {
     type: "Deluxe",
     price: 75000,
-    image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80",
+    image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80",
     capacity: 2,
     rating: 4.7,
     description: "Spacious retreat with premium furnishings and a private balcony.",
@@ -24,7 +23,7 @@ const rooms = [
   {
     type: "Executive",
     price: 120000,
-    image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80",
+    image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&q=80",
     capacity: 3,
     rating: 4.8,
     description: "Business-class luxury with a separate lounge and workspace.",
@@ -32,91 +31,117 @@ const rooms = [
   {
     type: "Presidential Suite",
     price: 250000,
-    image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80",
+    image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80",
     capacity: 4,
     rating: 4.9,
     description: "The pinnacle of opulence — panoramic views, butler service, and grandeur.",
+    featured: true,
   },
 ];
 
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.15 } },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 40 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
-};
-
 const RoomShowcase = () => {
   return (
-    <section id="rooms" className="py-16 sm:py-24 bg-background">
+    <section id="rooms" className="py-20 sm:py-32 bg-background">
       <div className="container mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-10 sm:mb-16"
+          className="text-center mb-14 sm:mb-20"
         >
-          <p className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary font-sans mb-2 sm:mb-3">
+          <p className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary font-sans mb-3">
             Accommodations
           </p>
-          <h2 className="text-2xl sm:text-3xl md:text-5xl font-serif font-bold text-foreground">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-foreground mb-4">
             Our Finest Rooms
           </h2>
+          <div className="w-16 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent mx-auto" />
         </motion.div>
 
-        <motion.div
-          variants={container}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
-        >
-          {rooms.map((room) => (
-            <motion.div key={room.type} variants={item}>
-              <Card className="group overflow-hidden border-0 shadow-luxury hover:shadow-2xl transition-all duration-500 bg-card">
-                <div className="relative h-48 sm:h-64 overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-8">
+          {rooms.map((room, i) => (
+            <motion.div
+              key={room.type}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: i * 0.1 }}
+            >
+              <div className="group relative overflow-hidden rounded-2xl bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-700 h-full">
+                {/* Image */}
+                <div className="relative h-56 sm:h-72 overflow-hidden">
                   <img
                     src={room.image}
                     alt={`${room.type} room`}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-[1.2s] group-hover:scale-110"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 flex items-center gap-1 text-white">
-                    <Star size={14} className="fill-primary text-primary" />
-                    <span className="text-sm font-sans">{room.rating}</span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+                  {/* Price badge */}
+                  <div className="absolute top-4 right-4 px-4 py-2 rounded-full glass text-white text-sm font-sans font-semibold">
+                    RWF {room.price.toLocaleString()}
+                    <span className="text-[10px] font-normal opacity-70"> / night</span>
+                  </div>
+
+                  {/* Bottom info overlay */}
+                  <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+                    <div>
+                      <h3 className="font-serif text-xl sm:text-2xl font-bold text-white mb-1">
+                        {room.type}
+                      </h3>
+                      <p className="text-sm text-white/70 font-sans line-clamp-1">
+                        {room.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <CardContent className="p-4 sm:p-5">
-                  <h3 className="font-serif text-lg sm:text-xl font-semibold text-card-foreground mb-1">
-                    {room.type}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground font-sans mb-3 sm:mb-4 line-clamp-2">
-                    {room.description}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-lg sm:text-xl font-bold text-primary font-sans">RWF {room.price.toLocaleString()}</span>
-                      <span className="text-xs text-muted-foreground font-sans"> / night</span>
+
+                {/* Card body */}
+                <div className="p-5 sm:p-6 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5 text-primary">
+                      <Star size={16} className="fill-primary" />
+                      <span className="text-sm font-sans font-semibold">{room.rating}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Users size={14} />
-                      <span className="text-xs font-sans">{room.capacity}</span>
+                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                      <Users size={16} />
+                      <span className="text-sm font-sans">{room.capacity} Guests</span>
                     </div>
                   </div>
                   <Link to="/rooms">
-                    <Button className="w-full mt-3 sm:mt-4 bg-secondary text-secondary-foreground hover:bg-secondary/90 font-sans tracking-wide py-2.5 active:scale-[0.98] transition-transform">
+                    <Button
+                      variant="ghost"
+                      className="font-sans tracking-wide text-primary hover:text-primary hover:bg-primary/10 gap-2 group/btn"
+                    >
                       View Details
+                      <ArrowRight
+                        size={16}
+                        className="transition-transform group-hover/btn:translate-x-1"
+                      />
                     </Button>
                   </Link>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </motion.div>
           ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center mt-10 sm:mt-14"
+        >
+          <Link to="/rooms">
+            <Button
+              size="lg"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-sans tracking-widest uppercase px-12 py-6 shadow-luxury hover:shadow-2xl transition-all duration-300 hover:-translate-y-0.5"
+            >
+              Explore All Rooms
+            </Button>
+          </Link>
         </motion.div>
       </div>
     </section>
