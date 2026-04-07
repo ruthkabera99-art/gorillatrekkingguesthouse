@@ -3,6 +3,7 @@ import Hero from "@/components/landing/Hero";
 import Experience from "@/components/landing/Experience";
 import RoomShowcase from "@/components/landing/RoomShowcase";
 import Amenities from "@/components/landing/Amenities";
+import Gallery from "@/components/landing/Gallery";
 import Testimonials from "@/components/landing/Testimonials";
 import Contact from "@/components/landing/Contact";
 import Footer from "@/components/landing/Footer";
