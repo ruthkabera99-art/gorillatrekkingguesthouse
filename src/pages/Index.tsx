@@ -18,6 +18,7 @@ const Index = () => {
       <RoomShowcase />
       <Amenities />
       <Gallery />
+      <TrekkingTours />
       <Testimonials />
       <Contact />
       <Footer />
