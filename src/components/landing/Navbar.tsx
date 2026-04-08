@@ -82,7 +82,7 @@ const Navbar = () => {
         >
           <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300">
             <Mountain size={20} className="text-primary" />
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 border-2 border-card" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-primary border-2 border-card" />
           </div>
           <div className="leading-none">
             <span className="font-serif text-sm sm:text-base font-bold tracking-wider text-foreground block">
