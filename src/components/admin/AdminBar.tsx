@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Clock, RefreshCw, CheckCircle } from "lucide-react";
+import { Clock, RefreshCw, PlayCircle, CheckCircle, Truck } from "lucide-react";
 
 type OrderItem = {
   id: string;
@@ -46,10 +46,10 @@ const AdminBar = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const markServed = async (id: string) => {
-    const { error } = await supabase.from("order_items").update({ status: "delivered" } as any).eq("id", id);
+  const updateStatus = async (id: string, status: string) => {
+    const { error } = await supabase.from("order_items").update({ status } as any).eq("id", id);
     if (error) toast.error(error.message);
-    else { toast.success("Marked as served ✅"); fetchItems(); }
+    else { toast.success(`Status → ${status}`); fetchItems(); }
   };
 
   const timeAgo = (dateStr: string) => {
@@ -91,9 +91,19 @@ const AdminBar = () => {
                   <p className="text-xs font-sans text-blue-600">🧑‍🍳 Waiter: {item.order.assigned_waiter}</p>
                 )}
                 <div className="flex gap-2">
-                  {(item.status === "ready" || item.status === "preparing") && (
-                    <Button size="sm" onClick={() => markServed(item.id)} className="flex-1 font-sans gap-1">
-                      <CheckCircle size={14} /> Served
+                  {item.status === "pending" && (
+                    <Button size="sm" onClick={() => updateStatus(item.id, "preparing")} className="flex-1 font-sans gap-1 bg-blue-600 text-white hover:bg-blue-700">
+                      <PlayCircle size={14} /> Start Preparing
+                    </Button>
+                  )}
+                  {item.status === "preparing" && (
+                    <Button size="sm" onClick={() => updateStatus(item.id, "ready")} className="flex-1 font-sans gap-1 bg-green-600 text-white hover:bg-green-700">
+                      <CheckCircle size={14} /> Mark Ready
+                    </Button>
+                  )}
+                  {item.status === "ready" && (
+                    <Button size="sm" variant="outline" onClick={() => updateStatus(item.id, "delivered")} className="flex-1 font-sans gap-1">
+                      <Truck size={14} /> Mark Delivered
                     </Button>
                   )}
                 </div>
