@@ -93,6 +93,7 @@ const Menu = () => {
           .eq("user_id", user.id).in("status", ["confirmed", "pending"])
           .lte("check_in", today).gte("check_out", today).maybeSingle();
         setActiveBooking(booking);
+        if (booking && roomSource) setChargeToRoom(true);
       }
       setLoading(false);
     };
