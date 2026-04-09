@@ -40,6 +40,7 @@ const statusConfig: Record<string, { icon: any; label: string; color: string; me
 const Menu = () => {
   const [searchParams] = useSearchParams();
   const tableNumber = searchParams.get("table");
+  const roomSource = searchParams.get("source") === "room";
   const { user } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -92,6 +93,7 @@ const Menu = () => {
           .eq("user_id", user.id).in("status", ["confirmed", "pending"])
           .lte("check_in", today).gte("check_out", today).maybeSingle();
         setActiveBooking(booking);
+        if (booking && roomSource) setChargeToRoom(true);
       }
       setLoading(false);
     };
