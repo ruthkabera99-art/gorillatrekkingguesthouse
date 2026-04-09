@@ -40,6 +40,7 @@ const statusConfig: Record<string, { icon: any; label: string; color: string; me
 const Menu = () => {
   const [searchParams] = useSearchParams();
   const tableNumber = searchParams.get("table");
+  const roomSource = searchParams.get("source") === "room";
   const { user } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
