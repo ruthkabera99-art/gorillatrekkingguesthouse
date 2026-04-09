@@ -20,6 +20,7 @@ import {
   Settings, Users, Tag, ChefHat, Wine, LogOut, BarChart3, CalendarDays
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import AdminOverview from "@/components/admin/AdminOverview";
 import AdminOrders from "@/components/admin/AdminOrders";
 import AdminInvoices from "@/components/admin/AdminInvoices";
@@ -53,6 +54,7 @@ const AdminDashboard = () => {
   const activeTab = searchParams.get("tab") || "overview";
   const [isAdmin, setIsAdmin] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [pendingCounts, setPendingCounts] = useState<{ kitchen: number; bar: number }>({ kitchen: 0, bar: 0 });
 
   useEffect(() => {
     if (!authLoading && !user) { navigate("/auth"); return; }
@@ -70,6 +72,28 @@ const AdminDashboard = () => {
     checkRole();
   }, [user, authLoading, navigate]);
 
+  // Real-time pending counts for kitchen & bar
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const [kitchenRes, barRes] = await Promise.all([
+        supabase.from("order_items").select("id", { count: "exact", head: true }).eq("department", "kitchen").eq("status", "pending"),
+        supabase.from("order_items").select("id", { count: "exact", head: true }).eq("department", "bar").eq("status", "pending"),
+      ]);
+      setPendingCounts({
+        kitchen: kitchenRes.count ?? 0,
+        bar: barRes.count ?? 0,
+      });
+    };
+
+    fetchCounts();
+
+    const channel = supabase.channel("sidebar-counts")
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => fetchCounts())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   if (authLoading || checking) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -79,6 +103,12 @@ const AdminDashboard = () => {
   if (!isAdmin) return null;
 
   const setTab = (key: string) => setSearchParams({ tab: key });
+
+  const getBadgeCount = (key: string): number | null => {
+    if (key === "kitchen" && pendingCounts.kitchen > 0) return pendingCounts.kitchen;
+    if (key === "bar" && pendingCounts.bar > 0) return pendingCounts.bar;
+    return null;
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -109,18 +139,26 @@ const AdminDashboard = () => {
               <SidebarGroupLabel>Management</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {tabs.map((tab) => (
-                    <SidebarMenuItem key={tab.key}>
-                      <SidebarMenuButton
-                        onClick={() => setTab(tab.key)}
-                        isActive={activeTab === tab.key}
-                        className="cursor-pointer"
-                      >
-                        <tab.icon className="mr-2 h-4 w-4" />
-                        <span>{tab.label}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                  {tabs.map((tab) => {
+                    const count = getBadgeCount(tab.key);
+                    return (
+                      <SidebarMenuItem key={tab.key}>
+                        <SidebarMenuButton
+                          onClick={() => setTab(tab.key)}
+                          isActive={activeTab === tab.key}
+                          className="cursor-pointer"
+                        >
+                          <tab.icon className="mr-2 h-4 w-4" />
+                          <span className="flex-1">{tab.label}</span>
+                          {count !== null && (
+                            <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1.5 text-[10px] font-bold">
+                              {count}
+                            </Badge>
+                          )}
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
