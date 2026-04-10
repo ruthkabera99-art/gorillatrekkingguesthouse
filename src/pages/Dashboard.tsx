@@ -44,7 +44,7 @@ const Dashboard = () => {
         supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("bookings").select("*, rooms(name, type, images, id)")
           .eq("user_id", user.id)
-          .in("status", ["confirmed", "pending"])
+          .in("status", ["confirmed", "pending", "checked_in"])
           .lte("check_in", today)
           .gte("check_out", today)
           .maybeSingle(),
@@ -228,7 +228,7 @@ const Dashboard = () => {
           <Card className="bg-card border border-border">
             <CardContent className="p-5 flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center"><Calendar size={20} className="text-primary" /></div>
-              <div><p className="text-2xl font-bold font-sans text-foreground">{bookings.filter(b => b.status === 'confirmed').length}</p><p className="text-xs text-muted-foreground font-sans">Active Stays</p></div>
+              <div><p className="text-2xl font-bold font-sans text-foreground">{bookings.filter(b => b.status === 'confirmed' || b.status === 'checked_in').length}</p><p className="text-xs text-muted-foreground font-sans">Active Stays</p></div>
             </CardContent>
           </Card>
         </div>
@@ -302,10 +302,11 @@ const Dashboard = () => {
                         <p className="text-lg font-bold text-primary font-sans">RWF {Number(b.total_price).toLocaleString()}</p>
                         <span className={`text-xs font-sans px-2 py-1 rounded-full capitalize ${
                           b.status === 'confirmed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                          b.status === 'checked_in' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                           b.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
                           b.status === 'completed' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                           'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                        }`}>{b.status}</span>
+                        }`}>{b.status === 'checked_in' ? 'Checked In' : b.status}</span>
                         {isActive && (
                           <Link to="/menu?source=room">
                             <Button size="sm" variant="outline" className="text-xs font-sans gap-1 h-7">
