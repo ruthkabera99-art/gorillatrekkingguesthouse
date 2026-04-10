@@ -90,7 +90,7 @@ const Menu = () => {
         const today = new Date().toISOString().split("T")[0];
         const { data: booking } = await supabase
           .from("bookings").select("*, rooms(name)")
-          .eq("user_id", user.id).in("status", ["confirmed", "pending"])
+          .eq("user_id", user.id).in("status", ["confirmed", "pending", "checked_in"])
           .lte("check_in", today).gte("check_out", today).maybeSingle();
         setActiveBooking(booking);
         if (booking && roomSource) setChargeToRoom(true);

@@ -44,7 +44,7 @@ const Dashboard = () => {
         supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
         supabase.from("bookings").select("*, rooms(name, type, images, id)")
           .eq("user_id", user.id)
-          .in("status", ["confirmed", "pending"])
+          .in("status", ["confirmed", "pending", "checked_in"])
           .lte("check_in", today)
           .gte("check_out", today)
           .maybeSingle(),
