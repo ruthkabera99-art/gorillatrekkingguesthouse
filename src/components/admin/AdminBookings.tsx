@@ -2,13 +2,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Eye, CalendarDays, Users, Phone, Mail, Clock, Bell, MessageSquare } from "lucide-react";
+import { Eye, CalendarDays, Users, Phone, Mail, Clock, Bell, MessageSquare, LogIn, LogOut } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import CheckoutDialog from "./CheckoutDialog";
 
 type BookingWithRoom = {
   id: string;
@@ -20,7 +20,7 @@ type BookingWithRoom = {
   guests_children: number;
   total_price: number;
   special_requests: string | null;
-  status: "pending" | "confirmed" | "cancelled" | "completed";
+  status: "pending" | "confirmed" | "checked_in" | "cancelled" | "completed";
   created_at: string;
   rooms: { name: string; type: string; base_price: number; images: string[] | null } | null;
 };
@@ -36,42 +36,31 @@ const fmt = (n: number) => `RWF ${n.toLocaleString()}`;
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   confirmed: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  checked_in: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
   cancelled: "bg-destructive/10 text-destructive border-destructive/20",
   completed: "bg-green-500/10 text-green-500 border-green-500/20",
 };
 
-// Send SMS notification helper
 const sendBookingSMS = async (guestPhone: string, guestName: string, roomName: string, status: string, checkIn: string, checkOut: string) => {
   const messages: Record<string, string> = {
     pending: `Hello ${guestName}, your booking at Gorilla Trekking Guest House for ${roomName} (${checkIn} to ${checkOut}) has been received. We'll confirm shortly!`,
     confirmed: `Great news ${guestName}! Your booking for ${roomName} at Gorilla Trekking Guest House (${checkIn} to ${checkOut}) is CONFIRMED. We look forward to welcoming you!`,
+    checked_in: `Welcome ${guestName}! You've been checked in to ${roomName} at Gorilla Trekking Guest House. Enjoy your stay!`,
     cancelled: `Dear ${guestName}, your booking for ${roomName} (${checkIn} to ${checkOut}) at Gorilla Trekking Guest House has been cancelled. Contact us for questions.`,
     completed: `Thank you ${guestName} for staying at Gorilla Trekking Guest House! We hope you enjoyed your time in ${roomName}. We'd love to see you again!`,
   };
-
   const message = messages[status];
   if (!message) return;
-
   try {
     const { data, error } = await supabase.functions.invoke("send-booking-sms", {
       body: { to: guestPhone, message },
     });
-
-    if (error) {
-      console.error("SMS invoke error:", error);
-      toast.error("Failed to send SMS notification");
-    } else if (data?.success) {
-      toast.success("SMS notification sent to guest");
-    } else if (data?.error) {
-      console.log("SMS skipped:", data.error);
-      // Don't show error toast if Twilio isn't configured - it's expected
-    }
-  } catch (err) {
-    console.error("SMS error:", err);
-  }
+    if (error) { console.error("SMS invoke error:", error); toast.error("Failed to send SMS notification"); }
+    else if (data?.success) toast.success("SMS notification sent to guest");
+    else if (data?.error) console.log("SMS skipped:", data.error);
+  } catch (err) { console.error("SMS error:", err); }
 };
 
-// Check notification settings
 const getNotificationSettings = async (): Promise<Record<string, any>> => {
   const { data } = await supabase.from("site_settings").select("value").eq("key", "notifications").single();
   return (data?.value as Record<string, any>) || {};
@@ -85,6 +74,9 @@ const AdminBookings = () => {
   const [guestProfile, setGuestProfile] = useState<Profile | null>(null);
   const [guestEmail, setGuestEmail] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [checkoutBooking, setCheckoutBooking] = useState<BookingWithRoom | null>(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [checkoutGuestName, setCheckoutGuestName] = useState("Guest");
 
   const fetchBookings = async () => {
     let query = supabase
@@ -93,7 +85,7 @@ const AdminBookings = () => {
       .order("created_at", { ascending: false });
 
     if (filter !== "all") {
-      query = query.eq("status", filter as "pending" | "confirmed" | "cancelled" | "completed");
+      query = query.eq("status", filter as any);
     }
 
     const { data, error } = await query;
@@ -118,13 +110,45 @@ const AdminBookings = () => {
     setGuestProfile(profile);
   };
 
+  const handleCheckIn = async (booking: BookingWithRoom) => {
+    const { error } = await supabase.from("bookings").update({ status: "checked_in" } as any).eq("id", booking.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Guest checked in to ${booking.rooms?.name}!`, {
+      description: `${format(new Date(booking.check_in), "MMM dd")} → ${format(new Date(booking.check_out), "MMM dd")}`,
+      icon: <LogIn size={16} />,
+    });
+    fetchBookings();
+    if (selectedBooking?.id === booking.id) {
+      setSelectedBooking(prev => prev ? { ...prev, status: "checked_in" } : null);
+    }
+  };
+
+  const handleOpenCheckout = async (booking: BookingWithRoom) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", booking.user_id)
+      .single();
+    setCheckoutGuestName(profile?.full_name || "Guest");
+    setCheckoutBooking(booking);
+    setCheckoutOpen(true);
+  };
+
   const updateStatus = async (id: string, status: string) => {
+    if (status === "checked_in") {
+      const booking = bookings.find(b => b.id === id);
+      if (booking) return handleCheckIn(booking);
+    }
+    if (status === "completed") {
+      const booking = bookings.find(b => b.id === id) || selectedBooking;
+      if (booking) return handleOpenCheckout(booking);
+    }
+
     const { error } = await supabase.from("bookings").update({ status } as any).eq("id", id);
     if (error) { toast.error(error.message); return; }
 
     const booking = bookings.find(b => b.id === id) || selectedBooking;
 
-    // In-app notification
     const settings = await getNotificationSettings();
     if (settings.in_app_notifications !== false) {
       toast.success(`Booking ${status}`, {
@@ -133,28 +157,16 @@ const AdminBookings = () => {
       });
     }
 
-    // SMS notification
     if (booking) {
       const shouldSendSMS =
         (status === "confirmed" && settings.sms_on_booking_confirmed) ||
         (status === "cancelled" && settings.sms_on_booking_cancelled);
 
       if (shouldSendSMS) {
-        // Fetch guest phone
         const { data: guestProf } = await supabase.from("profiles")
           .select("full_name, phone").eq("user_id", booking.user_id).single();
-
         if (guestProf?.phone) {
-          await sendBookingSMS(
-            guestProf.phone,
-            guestProf.full_name || "Guest",
-            booking.rooms?.name || "Room",
-            status,
-            format(new Date(booking.check_in), "MMM dd, yyyy"),
-            format(new Date(booking.check_out), "MMM dd, yyyy")
-          );
-        } else {
-          toast.info("Guest has no phone number on file - SMS skipped");
+          await sendBookingSMS(guestProf.phone, guestProf.full_name || "Guest", booking.rooms?.name || "Room", status, format(new Date(booking.check_in), "MMM dd, yyyy"), format(new Date(booking.check_out), "MMM dd, yyyy"));
         }
       }
     }
@@ -169,6 +181,7 @@ const AdminBookings = () => {
     total: bookings.length,
     pending: bookings.filter(b => b.status === "pending").length,
     confirmed: bookings.filter(b => b.status === "confirmed").length,
+    checkedIn: bookings.filter(b => b.status === "checked_in").length,
     completed: bookings.filter(b => b.status === "completed").length,
   };
 
@@ -177,11 +190,12 @@ const AdminBookings = () => {
   return (
     <div className="space-y-4">
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           { label: "Total", value: stats.total, color: "text-foreground" },
           { label: "Pending", value: stats.pending, color: "text-yellow-500" },
           { label: "Confirmed", value: stats.confirmed, color: "text-blue-500" },
+          { label: "Checked In", value: stats.checkedIn, color: "text-emerald-500" },
           { label: "Completed", value: stats.completed, color: "text-green-500" },
         ].map(s => (
           <Card key={s.label} className="bg-card border-border">
@@ -202,6 +216,7 @@ const AdminBookings = () => {
             <SelectItem value="all">All Bookings</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="confirmed">Confirmed</SelectItem>
+            <SelectItem value="checked_in">Checked In</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
@@ -249,14 +264,26 @@ const AdminBookings = () => {
                     <TableCell className="font-sans text-sm">{b.guests_adults}A {b.guests_children > 0 ? `+ ${b.guests_children}C` : ""}</TableCell>
                     <TableCell className="font-sans text-sm font-bold text-primary">{fmt(Number(b.total_price))}</TableCell>
                     <TableCell>
-                      <span className={`text-xs font-sans px-2 py-1 rounded-full border capitalize ${statusColors[b.status]}`}>
-                        {b.status}
+                      <span className={`text-xs font-sans px-2 py-1 rounded-full border capitalize ${statusColors[b.status] || ""}`}>
+                        {b.status === "checked_in" ? "Checked In" : b.status}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="ghost" onClick={() => viewDetails(b)}>
-                        <Eye size={14} />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        {b.status === "confirmed" && (
+                          <Button size="sm" variant="outline" className="text-xs font-sans gap-1 h-7 text-emerald-600 border-emerald-300 hover:bg-emerald-50" onClick={() => handleCheckIn(b)}>
+                            <LogIn size={12} /> Check In
+                          </Button>
+                        )}
+                        {b.status === "checked_in" && (
+                          <Button size="sm" variant="outline" className="text-xs font-sans gap-1 h-7 text-orange-600 border-orange-300 hover:bg-orange-50" onClick={() => handleOpenCheckout(b)}>
+                            <LogOut size={12} /> Check Out
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost" onClick={() => viewDetails(b)}>
+                          <Eye size={14} />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -338,7 +365,6 @@ const AdminBookings = () => {
                 </CardContent>
               </Card>
 
-              {/* Special Requests */}
               {selectedBooking.special_requests && (
                 <Card className="bg-muted/50 border-border">
                   <CardContent className="p-3">
@@ -348,7 +374,6 @@ const AdminBookings = () => {
                 </Card>
               )}
 
-              {/* SMS Quick Send */}
               {guestProfile?.phone && (
                 <Card className="bg-primary/5 border-primary/20">
                   <CardContent className="p-3">
@@ -357,21 +382,9 @@ const AdminBookings = () => {
                         <MessageSquare size={14} className="text-primary" />
                         <span className="font-sans text-xs text-foreground">Quick SMS to {guestProfile.phone}</span>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs font-sans h-7"
-                        onClick={async () => {
-                          await sendBookingSMS(
-                            guestProfile.phone!,
-                            guestProfile.full_name || "Guest",
-                            selectedBooking.rooms?.name || "Room",
-                            selectedBooking.status,
-                            format(new Date(selectedBooking.check_in), "MMM dd, yyyy"),
-                            format(new Date(selectedBooking.check_out), "MMM dd, yyyy")
-                          );
-                        }}
-                      >
+                      <Button size="sm" variant="outline" className="text-xs font-sans h-7" onClick={async () => {
+                        await sendBookingSMS(guestProfile.phone!, guestProfile.full_name || "Guest", selectedBooking.rooms?.name || "Room", selectedBooking.status, format(new Date(selectedBooking.check_in), "MMM dd, yyyy"), format(new Date(selectedBooking.check_out), "MMM dd, yyyy"));
+                      }}>
                         <Bell size={12} className="mr-1" /> Send SMS
                       </Button>
                     </div>
@@ -379,11 +392,24 @@ const AdminBookings = () => {
                 </Card>
               )}
 
-              {/* Status & Actions */}
+              {/* Status Actions - now includes Check In / Check Out */}
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground font-sans">Update Status</p>
+
+                {/* Quick Check In / Check Out buttons */}
+                {selectedBooking.status === "confirmed" && (
+                  <Button className="w-full font-sans gap-2 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleCheckIn(selectedBooking)}>
+                    <LogIn size={16} /> Check In Guest
+                  </Button>
+                )}
+                {selectedBooking.status === "checked_in" && (
+                  <Button className="w-full font-sans gap-2 bg-orange-600 hover:bg-orange-700 text-white" onClick={() => handleOpenCheckout(selectedBooking)}>
+                    <LogOut size={16} /> Check Out & View Bill
+                  </Button>
+                )}
+
                 <div className="flex flex-wrap gap-2">
-                  {(["pending", "confirmed", "completed", "cancelled"] as const).map(s => (
+                  {(["pending", "confirmed", "checked_in", "completed", "cancelled"] as const).map(s => (
                     <Button
                       key={s}
                       size="sm"
@@ -392,7 +418,7 @@ const AdminBookings = () => {
                       onClick={() => updateStatus(selectedBooking.id, s)}
                       disabled={selectedBooking.status === s}
                     >
-                      {s}
+                      {s === "checked_in" ? "Checked In" : s}
                     </Button>
                   ))}
                 </div>
@@ -405,6 +431,19 @@ const AdminBookings = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Checkout Dialog */}
+      <CheckoutDialog
+        booking={checkoutBooking}
+        open={checkoutOpen}
+        onOpenChange={setCheckoutOpen}
+        onCheckoutComplete={() => {
+          setCheckoutOpen(false);
+          setDetailOpen(false);
+          fetchBookings();
+        }}
+        guestName={checkoutGuestName}
+      />
     </div>
   );
 };
