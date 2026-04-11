@@ -22,7 +22,10 @@ export type Database = {
           guests_adults: number
           guests_children: number
           id: string
+          paid_at: string | null
           payment_id: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference: string | null
           room_id: string
           special_requests: string | null
           status: Database["public"]["Enums"]["booking_status"]
@@ -37,7 +40,10 @@ export type Database = {
           guests_adults?: number
           guests_children?: number
           id?: string
+          paid_at?: string | null
           payment_id?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference?: string | null
           room_id: string
           special_requests?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
@@ -52,7 +58,10 @@ export type Database = {
           guests_adults?: number
           guests_children?: number
           id?: string
+          paid_at?: string | null
           payment_id?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_reference?: string | null
           room_id?: string
           special_requests?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
@@ -459,6 +468,7 @@ export type Database = {
         | "ready"
         | "delivered"
         | "cancelled"
+      payment_method: "cash" | "card" | "mobile_money"
       product_category:
         | "appetizer"
         | "main_course"
@@ -617,6 +627,7 @@ export const Constants = {
       order_payment_status: ["unpaid", "paid", "charged_to_room"],
       order_source_type: ["room", "table"],
       order_status: ["pending", "preparing", "ready", "delivered", "cancelled"],
+      payment_method: ["cash", "card", "mobile_money"],
       product_category: [
         "appetizer",
         "main_course",
