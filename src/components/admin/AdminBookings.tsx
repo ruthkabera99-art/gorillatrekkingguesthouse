@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Eye, CalendarDays, Users, Phone, Mail, Clock, Bell, MessageSquare, LogIn, LogOut } from "lucide-react";
+import { Eye, CalendarDays, Users, Phone, Mail, Clock, Bell, MessageSquare, LogIn, LogOut, Banknote } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import CheckoutDialog from "./CheckoutDialog";
 
@@ -23,6 +23,9 @@ type BookingWithRoom = {
   status: "pending" | "confirmed" | "checked_in" | "cancelled" | "completed";
   created_at: string;
   rooms: { name: string; type: string; base_price: number; images: string[] | null } | null;
+  payment_method: string | null;
+  payment_reference: string | null;
+  paid_at: string | null;
 };
 
 type Profile = {
@@ -241,8 +244,9 @@ const AdminBookings = () => {
                   <TableHead className="font-sans">Check-out</TableHead>
                   <TableHead className="font-sans">Guests</TableHead>
                   <TableHead className="font-sans">Total</TableHead>
-                  <TableHead className="font-sans">Status</TableHead>
-                  <TableHead className="font-sans text-right">Actions</TableHead>
+                    <TableHead className="font-sans">Status</TableHead>
+                    <TableHead className="font-sans">Payment</TableHead>
+                    <TableHead className="font-sans text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -267,6 +271,15 @@ const AdminBookings = () => {
                       <span className={`text-xs font-sans px-2 py-1 rounded-full border capitalize ${statusColors[b.status] || ""}`}>
                         {b.status === "checked_in" ? "Checked In" : b.status}
                       </span>
+                    </TableCell>
+                    <TableCell className="font-sans text-sm">
+                      {b.payment_method ? (
+                        <span className="capitalize text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">
+                          {b.payment_method === "mobile_money" ? "MoMo" : b.payment_method}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -362,6 +375,15 @@ const AdminBookings = () => {
                   <div className="pt-1 border-t border-border">
                     <p className="font-sans text-lg font-bold text-primary">{fmt(Number(selectedBooking.total_price))}</p>
                   </div>
+                  {selectedBooking.payment_method && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <Banknote size={14} className="text-muted-foreground" />
+                      <span className="font-sans text-sm text-foreground capitalize">
+                        Paid via {selectedBooking.payment_method === "mobile_money" ? "Mobile Money" : selectedBooking.payment_method}
+                        {selectedBooking.payment_reference ? ` (Ref: ${selectedBooking.payment_reference})` : ""}
+                      </span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
