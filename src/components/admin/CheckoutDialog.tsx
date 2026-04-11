@@ -339,6 +339,8 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
             nightlyRate={Number(booking.rooms?.base_price || 0)}
             accommodationTotal={accommodationTotal}
             items={receiptItems}
+            paymentMethod={paymentMethod}
+            paymentReference={paymentRef}
           />
         </div>
       )}

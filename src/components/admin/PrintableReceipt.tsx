@@ -27,6 +27,8 @@ type ReceiptProps = {
   accommodationTotal: number;
   items: ReceiptItem[];
   invoiceNumber?: string;
+  paymentMethod?: string | null;
+  paymentReference?: string | null;
 };
 
 const PrintableReceipt = forwardRef<HTMLDivElement, ReceiptProps>(
@@ -48,6 +50,8 @@ const PrintableReceipt = forwardRef<HTMLDivElement, ReceiptProps>(
       accommodationTotal,
       items,
       invoiceNumber,
+      paymentMethod,
+      paymentReference,
     },
     ref
   ) => {
@@ -180,6 +184,26 @@ const PrintableReceipt = forwardRef<HTMLDivElement, ReceiptProps>(
           </div>
           <Line />
         </div>
+
+        {/* Payment Method */}
+        {paymentMethod && (
+          <>
+            <div className="receipt-section-title">PAYMENT</div>
+            <div className="receipt-row">
+              <span>Method:</span>
+              <span style={{ textTransform: 'capitalize' }}>
+                {paymentMethod === "mobile_money" ? "Mobile Money" : paymentMethod}
+              </span>
+            </div>
+            {paymentReference && (
+              <div className="receipt-row">
+                <span>Ref:</span>
+                <span>{paymentReference}</span>
+              </div>
+            )}
+            <Line />
+          </>
+        )}
 
         {/* Footer */}
         <div className="receipt-footer">
