@@ -1,11 +1,14 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Printer, LogOut, Receipt, UtensilsCrossed, Wine } from "lucide-react";
+import { Printer, LogOut, Receipt, UtensilsCrossed, Wine, Banknote, CreditCard, Smartphone } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { format, differenceInDays } from "date-fns";
 import PrintableReceipt from "./PrintableReceipt";
 
@@ -55,11 +58,15 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
   const [loading, setLoading] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [paymentRef, setPaymentRef] = useState("");
 
   useEffect(() => {
     if (open && booking) {
       loadOrders();
       setShowReceipt(false);
+      setPaymentMethod("cash");
+      setPaymentRef("");
     }
   }, [open, booking]);
 
@@ -107,10 +114,19 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
   }));
 
   const handleCheckout = async () => {
+    if (!paymentMethod) {
+      toast.error("Please select a payment method");
+      return;
+    }
     setCheckingOut(true);
     const { error } = await supabase
       .from("bookings")
-      .update({ status: "completed" } as any)
+      .update({
+        status: "completed",
+        payment_method: paymentMethod,
+        payment_reference: paymentRef || null,
+        paid_at: new Date().toISOString(),
+      } as any)
       .eq("id", booking.id);
 
     if (error) {
@@ -246,6 +262,44 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
                 </div>
               </CardContent>
             </Card>
+
+            {/* Payment Method Selection */}
+            {booking.status !== "completed" && (
+              <div className="space-y-3">
+                <h4 className="font-sans font-bold text-sm text-foreground">Payment Method</h4>
+                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "cash", label: "Cash", icon: <Banknote size={16} /> },
+                    { value: "card", label: "Card", icon: <CreditCard size={16} /> },
+                    { value: "mobile_money", label: "MoMo", icon: <Smartphone size={16} /> },
+                  ].map((m) => (
+                    <Label
+                      key={m.value}
+                      htmlFor={`pay-${m.value}`}
+                      className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 cursor-pointer text-center transition-colors ${
+                        paymentMethod === m.value
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-muted-foreground/30"
+                      }`}
+                    >
+                      <RadioGroupItem value={m.value} id={`pay-${m.value}`} className="sr-only" />
+                      {m.icon}
+                      <span className="text-xs font-sans font-medium">{m.label}</span>
+                    </Label>
+                  ))}
+                </RadioGroup>
+                <Input
+                  placeholder={
+                    paymentMethod === "card" ? "Last 4 digits or auth code" :
+                    paymentMethod === "mobile_money" ? "Transaction ID" :
+                    "Receipt number (optional)"
+                  }
+                  value={paymentRef}
+                  onChange={(e) => setPaymentRef(e.target.value)}
+                  className="font-sans text-sm"
+                />
+              </div>
+            )}
 
             <div className="flex gap-2">
               <Button variant="outline" onClick={printReceipt} className="flex-1 font-sans gap-1.5">
