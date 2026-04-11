@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Printer, LogOut, Receipt, UtensilsCrossed, Wine } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import PrintableReceipt from "./PrintableReceipt";
 
 const fmt = (n: number) => `RWF ${n.toLocaleString()}`;
 
@@ -53,10 +54,12 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [loading, setLoading] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   useEffect(() => {
     if (open && booking) {
       loadOrders();
+      setShowReceipt(false);
     }
   }, [open, booking]);
 
@@ -83,7 +86,6 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
   const nights = differenceInDays(new Date(booking.check_out), new Date(booking.check_in));
   const accommodationTotal = Number(booking.total_price);
 
-  // Separate kitchen and bar items
   const allItems = orders.flatMap(o =>
     (o.order_items || [])
       .filter(i => i.status !== "cancelled")
@@ -96,6 +98,13 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
   const barTotal = barItems.reduce((s, i) => s + i.unit_price * i.quantity, 0);
   const servicesTotal = kitchenTotal + barTotal;
   const grandTotal = accommodationTotal + servicesTotal;
+
+  const receiptItems = allItems.map(i => ({
+    name: i.product?.name || "Item",
+    qty: i.quantity,
+    unitPrice: i.unit_price,
+    department: (i.product?.department || "kitchen") as "kitchen" | "bar",
+  }));
 
   const handleCheckout = async () => {
     setCheckingOut(true);
@@ -117,7 +126,10 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
     onCheckoutComplete();
   };
 
-  const printInvoice = () => window.print();
+  const printReceipt = () => {
+    setShowReceipt(true);
+    setTimeout(() => window.print(), 300);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -133,14 +145,13 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="space-y-4" id="checkout-invoice">
-            {/* Header */}
+          <div className="space-y-4">
+            {/* On-screen summary */}
             <div className="text-center border-b border-border pb-3">
               <h3 className="font-serif text-lg font-bold text-foreground">GORILLA TREKKING GUEST HOUSE</h3>
               <p className="text-xs text-muted-foreground font-sans">Musanze, Rwanda · Final Invoice</p>
             </div>
 
-            {/* Guest & Stay Info */}
             <div className="grid grid-cols-2 gap-2 text-sm font-sans">
               <div>
                 <p className="text-muted-foreground text-xs">Guest</p>
@@ -162,7 +173,6 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
 
             <Separator />
 
-            {/* Accommodation */}
             <div>
               <h4 className="font-sans font-bold text-sm text-foreground mb-2">🏨 Accommodation</h4>
               <div className="flex justify-between text-sm font-sans">
@@ -173,7 +183,6 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
               </div>
             </div>
 
-            {/* Kitchen Services */}
             {kitchenItems.length > 0 && (
               <div>
                 <h4 className="font-sans font-bold text-sm text-foreground mb-2 flex items-center gap-1.5">
@@ -181,9 +190,7 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
                 </h4>
                 {kitchenItems.map((item, i) => (
                   <div key={i} className="flex justify-between text-sm font-sans pl-2">
-                    <span className="text-muted-foreground">
-                      {item.product?.name} × {item.quantity}
-                    </span>
+                    <span className="text-muted-foreground">{item.product?.name} × {item.quantity}</span>
                     <span className="text-foreground">{fmt(item.unit_price * item.quantity)}</span>
                   </div>
                 ))}
@@ -194,7 +201,6 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
               </div>
             )}
 
-            {/* Bar Services */}
             {barItems.length > 0 && (
               <div>
                 <h4 className="font-sans font-bold text-sm text-foreground mb-2 flex items-center gap-1.5">
@@ -202,9 +208,7 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
                 </h4>
                 {barItems.map((item, i) => (
                   <div key={i} className="flex justify-between text-sm font-sans pl-2">
-                    <span className="text-muted-foreground">
-                      {item.product?.name} × {item.quantity}
-                    </span>
+                    <span className="text-muted-foreground">{item.product?.name} × {item.quantity}</span>
                     <span className="text-foreground">{fmt(item.unit_price * item.quantity)}</span>
                   </div>
                 ))}
@@ -223,7 +227,6 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
 
             <Separator className="border-2" />
 
-            {/* Summary */}
             <Card className="bg-muted/50 border-border">
               <CardContent className="p-3 space-y-1.5">
                 <div className="flex justify-between text-sm font-sans">
@@ -244,10 +247,9 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
               </CardContent>
             </Card>
 
-            {/* Actions */}
             <div className="flex gap-2">
-              <Button variant="outline" onClick={printInvoice} className="flex-1 font-sans gap-1.5">
-                <Printer size={14} /> Print Bill
+              <Button variant="outline" onClick={printReceipt} className="flex-1 font-sans gap-1.5">
+                <Printer size={14} /> Print Receipt
               </Button>
               {booking.status !== "completed" && (
                 <Button
@@ -268,6 +270,24 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
           </div>
         )}
       </DialogContent>
+
+      {/* Hidden printable receipt – only visible during print */}
+      {showReceipt && (
+        <div className="fixed left-[-9999px] top-0">
+          <PrintableReceipt
+            guestName={guestName}
+            roomName={booking.rooms?.name || "Room"}
+            roomType={booking.rooms?.type || "standard"}
+            checkIn={booking.check_in}
+            checkOut={booking.check_out}
+            adultsCount={booking.guests_adults}
+            childrenCount={booking.guests_children}
+            nightlyRate={Number(booking.rooms?.base_price || 0)}
+            accommodationTotal={accommodationTotal}
+            items={receiptItems}
+          />
+        </div>
+      )}
     </Dialog>
   );
 };

@@ -147,3 +147,73 @@
     box-shadow: 0 10px 40px -10px hsl(var(--gold) / 0.2), 0 4px 20px -5px rgba(0,0,0,0.1);
   }
 }
+
+/* ===== Printable Receipt – IBM 80mm thermal paper ===== */
+.receipt-paper {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  width: 72mm; /* printable area of 80mm roll */
+  margin: 0 auto;
+  padding: 4mm 0;
+  color: #000;
+  background: #fff;
+}
+
+.receipt-header { text-align: center; margin-bottom: 2mm; }
+.receipt-logo { font-size: 28px; margin-bottom: 1mm; }
+.receipt-hotel-name { font-size: 14px; font-weight: bold; letter-spacing: 0.5px; }
+.receipt-sub { font-size: 10px; color: #555; }
+.receipt-center { text-align: center; }
+.receipt-title { text-align: center; font-size: 14px; font-weight: bold; margin: 2mm 0 1mm; letter-spacing: 1px; }
+.receipt-section-title { font-size: 11px; font-weight: bold; margin: 2mm 0 1mm; text-transform: uppercase; }
+.receipt-line { text-align: center; font-size: 10px; color: #999; overflow: hidden; white-space: nowrap; margin: 1mm 0; }
+.receipt-dotted { color: #bbb; }
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  padding: 0.3mm 0;
+  gap: 2mm;
+}
+.receipt-row span:first-child { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.receipt-row span:last-child { white-space: nowrap; text-align: right; }
+
+.receipt-subtotal { font-weight: bold; border-top: 1px dashed #ccc; margin-top: 1mm; padding-top: 1mm; }
+.receipt-total-row { font-size: 14px; font-weight: bold; }
+.receipt-grand-total { margin: 2mm 0; }
+
+.receipt-footer { text-align: center; margin-top: 4mm; font-size: 10px; color: #555; }
+.receipt-footer p { margin: 0.5mm 0; }
+
+/* Print media – show only the receipt */
+@media print {
+  body * { visibility: hidden !important; }
+
+  #printable-receipt,
+  #printable-receipt * {
+    visibility: visible !important;
+  }
+
+  #printable-receipt {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 72mm;
+    margin: 0;
+    padding: 2mm;
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .receipt-sub { color: #555 !important; }
+  .receipt-line { color: #999 !important; }
+
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+}
