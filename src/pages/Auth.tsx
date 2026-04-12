@@ -49,10 +49,14 @@ const Auth = () => {
         }
         const { error } = await signUpWithPhone(phone, password, fullName);
         if (error) {
-          toast.error(error.message);
+          if (error.message?.includes("rate") || error.message?.includes("limit")) {
+            toast.error("Too many attempts. Please wait a moment and try again.");
+          } else {
+            toast.error(error.message);
+          }
         } else {
-          toast.success("Account created! You can now sign in.");
-          setIsLogin(true);
+          toast.success("Account created! Welcome!");
+          navigate("/");
         }
       } else {
         const { error } = await signUp(email, password, fullName, phone);
