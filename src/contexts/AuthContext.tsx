@@ -6,8 +6,10 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: any }>;
+  signUpWithPhone: (phone: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithPhone: (phone: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -34,13 +36,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName, phone: phone || "" },
         emailRedirectTo: window.location.origin,
+      },
+    });
+    return { error };
+  };
+
+  const signUpWithPhone = async (phone: string, password: string, fullName: string) => {
+    // Use phone as a fake email for Supabase auth (phone-as-email pattern)
+    const fakeEmail = `${phone.replace(/[^0-9]/g, "")}@whatsapp.guest`;
+    const { error } = await supabase.auth.signUp({
+      email: fakeEmail,
+      password,
+      options: {
+        data: { full_name: fullName, phone },
       },
     });
     return { error };
@@ -51,12 +66,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
+  const signInWithPhone = async (phone: string, password: string) => {
+    const fakeEmail = `${phone.replace(/[^0-9]/g, "")}@whatsapp.guest`;
+    const { error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password });
+    return { error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, user, loading, signUp, signUpWithPhone, signIn, signInWithPhone, signOut }}>
       {children}
     </AuthContext.Provider>
   );
