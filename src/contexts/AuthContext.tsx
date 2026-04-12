@@ -49,15 +49,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signUpWithPhone = async (phone: string, password: string, fullName: string) => {
-    // Use phone as a fake email for Supabase auth (phone-as-email pattern)
     const fakeEmail = `${phone.replace(/[^0-9]/g, "")}@whatsapp.guest`;
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: fakeEmail,
       password,
       options: {
         data: { full_name: fullName, phone },
       },
     });
+    // Auto sign-in after signup for phone users (no email to confirm)
+    if (!error && data?.user && !data.session) {
+      const signInResult = await supabase.auth.signInWithPassword({ email: fakeEmail, password });
+      return { error: signInResult.error };
+    }
     return { error };
   };
 
