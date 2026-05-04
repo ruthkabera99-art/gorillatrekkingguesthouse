@@ -178,10 +178,16 @@ const AdminBookings = () => {
         (status === "cancelled" && settings.sms_on_booking_cancelled);
 
       if (shouldSendSMS) {
-        const { data: guestProf } = await supabase.from("profiles")
-          .select("full_name, phone").eq("user_id", booking.user_id).single();
-        if (guestProf?.phone) {
-          await sendBookingSMS(guestProf.phone, guestProf.full_name || "Guest", booking.rooms?.name || "Room", status, format(new Date(booking.check_in), "MMM dd, yyyy"), format(new Date(booking.check_out), "MMM dd, yyyy"));
+        let phone = booking.guest_phone;
+        let name = booking.guest_name || "Guest";
+        if (booking.user_id) {
+          const { data: guestProf } = await supabase.from("profiles")
+            .select("full_name, phone").eq("user_id", booking.user_id).single();
+          phone = guestProf?.phone || phone;
+          name = guestProf?.full_name || name;
+        }
+        if (phone) {
+          await sendBookingSMS(phone, name, booking.rooms?.name || "Room", status, format(new Date(booking.check_in), "MMM dd, yyyy"), format(new Date(booking.check_out), "MMM dd, yyyy"));
         }
       }
     }
