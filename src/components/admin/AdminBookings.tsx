@@ -109,12 +109,16 @@ const AdminBookings = () => {
     setGuestEmail(null);
     setDetailOpen(true);
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name, phone, avatar_url")
-      .eq("user_id", booking.user_id)
-      .single();
-    setGuestProfile(profile);
+    if (booking.user_id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone, avatar_url")
+        .eq("user_id", booking.user_id)
+        .single();
+      setGuestProfile(profile);
+    } else {
+      setGuestProfile({ full_name: booking.guest_name, phone: booking.guest_phone, avatar_url: null });
+    }
   };
 
   const handleCheckIn = async (booking: BookingWithRoom) => {
