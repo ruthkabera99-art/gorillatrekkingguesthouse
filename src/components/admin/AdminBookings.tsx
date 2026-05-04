@@ -229,10 +229,14 @@ const AdminBookings = () => {
       </div>
 
       {/* Filter */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h2 className="font-serif text-lg font-semibold text-foreground">Bookings</h2>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+        <div className="flex items-center gap-2">
+          <Button size="sm" className="font-sans gap-2" onClick={() => setWalkInOpen(true)}>
+            <UserPlus size={14} /> New Walk-in
+          </Button>
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Bookings</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
