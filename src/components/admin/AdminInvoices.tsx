@@ -18,7 +18,7 @@ const AdminInvoices = () => {
 
   const loadBookings = async () => {
     const { data } = await supabase.from("bookings")
-      .select("*, rooms(name, type, base_price)")
+      .select("*, rooms(name, type, base_price), profiles:user_id(full_name, phone)" as any)
       .in("status", ["confirmed", "completed"])
       .order("created_at", { ascending: false });
     setBookings(data || []);
