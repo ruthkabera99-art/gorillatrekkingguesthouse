@@ -489,6 +489,13 @@ const AdminBookings = () => {
         }}
         guestName={checkoutGuestName}
       />
+
+      {/* Walk-in Booking Dialog */}
+      <WalkInBookingDialog
+        open={walkInOpen}
+        onOpenChange={setWalkInOpen}
+        onCreated={fetchBookings}
+      />
     </div>
   );
 };
