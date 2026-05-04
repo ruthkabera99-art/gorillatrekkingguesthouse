@@ -90,6 +90,10 @@ const AdminInvoices = () => {
               <CardContent className="p-4 flex flex-col md:flex-row md:items-center gap-4">
                 <div className="flex-1">
                   <p className="font-sans font-bold text-foreground">{b.rooms?.name || "Room"}</p>
+                  <p className="text-sm text-foreground font-sans">
+                    {b.guest_name ? `${b.guest_name}${b.user_id ? "" : " (walk-in)"}` : "Registered guest"}
+                    {b.guest_phone ? ` · ${b.guest_phone}` : ""}
+                  </p>
                   <p className="text-sm text-muted-foreground font-sans">
                     {b.check_in} → {b.check_out} ({getNights(b.check_in, b.check_out)} nights)
                   </p>
