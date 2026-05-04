@@ -138,6 +138,15 @@ const AdminInvoices = () => {
                 <p className="text-xs text-muted-foreground font-sans">Musanze, Rwanda</p>
               </div>
               <div className="text-sm font-sans space-y-1">
+                {selectedBooking.guest_name && (
+                  <p>
+                    <strong>Guest:</strong> {selectedBooking.guest_name}
+                    {!selectedBooking.user_id && <span className="text-muted-foreground"> (walk-in)</span>}
+                  </p>
+                )}
+                {selectedBooking.guest_phone && (
+                  <p><strong>Phone:</strong> {selectedBooking.guest_phone}</p>
+                )}
                 <p><strong>Room:</strong> {selectedBooking.rooms?.name} ({selectedBooking.rooms?.type})</p>
                 <p><strong>Check-in:</strong> {selectedBooking.check_in}</p>
                 <p><strong>Check-out:</strong> {selectedBooking.check_out}</p>
