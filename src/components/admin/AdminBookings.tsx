@@ -366,7 +366,9 @@ const AdminBookings = () => {
                   )}
                   <div className="flex items-center gap-2">
                     <Mail size={14} className="text-muted-foreground" />
-                    <span className="font-sans text-sm text-muted-foreground text-xs">User ID: {selectedBooking.user_id.slice(0, 8)}...</span>
+                    <span className="font-sans text-sm text-muted-foreground text-xs">
+                      {selectedBooking.user_id ? `User ID: ${selectedBooking.user_id.slice(0, 8)}...` : "Walk-in guest (no account)"}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
