@@ -135,12 +135,16 @@ const AdminBookings = () => {
   };
 
   const handleOpenCheckout = async (booking: BookingWithRoom) => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("user_id", booking.user_id)
-      .single();
-    setCheckoutGuestName(profile?.full_name || "Guest");
+    let name = booking.guest_name || "Guest";
+    if (booking.user_id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", booking.user_id)
+        .single();
+      name = profile?.full_name || name;
+    }
+    setCheckoutGuestName(name);
     setCheckoutBooking(booking);
     setCheckoutOpen(true);
   };
