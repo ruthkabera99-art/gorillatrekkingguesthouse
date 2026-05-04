@@ -6,13 +6,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Eye, CalendarDays, Users, Phone, Mail, Clock, Bell, MessageSquare, LogIn, LogOut, Banknote } from "lucide-react";
+import { Eye, CalendarDays, Users, Phone, Mail, Clock, Bell, MessageSquare, LogIn, LogOut, Banknote, UserPlus } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import CheckoutDialog from "./CheckoutDialog";
+import WalkInBookingDialog from "./WalkInBookingDialog";
 
 type BookingWithRoom = {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  guest_name: string | null;
+  guest_phone: string | null;
   room_id: string;
   check_in: string;
   check_out: string;
