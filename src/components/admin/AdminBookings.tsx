@@ -83,6 +83,7 @@ const AdminBookings = () => {
   const [checkoutBooking, setCheckoutBooking] = useState<BookingWithRoom | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutGuestName, setCheckoutGuestName] = useState("Guest");
+  const [walkInOpen, setWalkInOpen] = useState(false);
 
   const fetchBookings = async () => {
     let query = supabase
