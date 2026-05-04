@@ -364,10 +364,16 @@ const AdminBookings = () => {
                       <span className="font-sans text-sm text-foreground">{guestProfile.phone}</span>
                     </div>
                   )}
+                  {!selectedBooking.user_id && selectedBooking.guest_phone && !guestProfile?.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone size={14} className="text-muted-foreground" />
+                      <span className="font-sans text-sm text-foreground">{selectedBooking.guest_phone}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <Mail size={14} className="text-muted-foreground" />
-                    <span className="font-sans text-sm text-muted-foreground text-xs">
-                      {selectedBooking.user_id ? `User ID: ${selectedBooking.user_id.slice(0, 8)}...` : "Walk-in guest (no account)"}
+                    <span className="font-sans text-xs text-muted-foreground">
+                      {selectedBooking.user_id ? "Registered guest account" : "Walk-in guest (no account)"}
                     </span>
                   </div>
                 </CardContent>
