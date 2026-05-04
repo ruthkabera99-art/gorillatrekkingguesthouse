@@ -244,8 +244,9 @@ const AdminBookings = () => {
             <SelectItem value="checked_in">Checked In</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Bookings Table */}
