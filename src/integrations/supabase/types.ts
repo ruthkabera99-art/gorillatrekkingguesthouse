@@ -19,6 +19,8 @@ export type Database = {
           check_in: string
           check_out: string
           created_at: string
+          guest_name: string | null
+          guest_phone: string | null
           guests_adults: number
           guests_children: number
           id: string
@@ -31,12 +33,14 @@ export type Database = {
           status: Database["public"]["Enums"]["booking_status"]
           total_price: number
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           check_in: string
           check_out: string
           created_at?: string
+          guest_name?: string | null
+          guest_phone?: string | null
           guests_adults?: number
           guests_children?: number
           id?: string
@@ -49,12 +53,14 @@ export type Database = {
           status?: Database["public"]["Enums"]["booking_status"]
           total_price: number
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           check_in?: string
           check_out?: string
           created_at?: string
+          guest_name?: string | null
+          guest_phone?: string | null
           guests_adults?: number
           guests_children?: number
           id?: string
@@ -67,7 +73,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["booking_status"]
           total_price?: number
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {

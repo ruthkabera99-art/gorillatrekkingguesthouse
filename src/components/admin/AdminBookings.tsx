@@ -6,13 +6,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Eye, CalendarDays, Users, Phone, Mail, Clock, Bell, MessageSquare, LogIn, LogOut, Banknote } from "lucide-react";
+import { Eye, CalendarDays, Users, Phone, Mail, Clock, Bell, MessageSquare, LogIn, LogOut, Banknote, UserPlus } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import CheckoutDialog from "./CheckoutDialog";
+import WalkInBookingDialog from "./WalkInBookingDialog";
 
 type BookingWithRoom = {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  guest_name: string | null;
+  guest_phone: string | null;
   room_id: string;
   check_in: string;
   check_out: string;
@@ -80,6 +83,7 @@ const AdminBookings = () => {
   const [checkoutBooking, setCheckoutBooking] = useState<BookingWithRoom | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [checkoutGuestName, setCheckoutGuestName] = useState("Guest");
+  const [walkInOpen, setWalkInOpen] = useState(false);
 
   const fetchBookings = async () => {
     let query = supabase
@@ -105,12 +109,16 @@ const AdminBookings = () => {
     setGuestEmail(null);
     setDetailOpen(true);
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name, phone, avatar_url")
-      .eq("user_id", booking.user_id)
-      .single();
-    setGuestProfile(profile);
+    if (booking.user_id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone, avatar_url")
+        .eq("user_id", booking.user_id)
+        .single();
+      setGuestProfile(profile);
+    } else {
+      setGuestProfile({ full_name: booking.guest_name, phone: booking.guest_phone, avatar_url: null });
+    }
   };
 
   const handleCheckIn = async (booking: BookingWithRoom) => {
@@ -127,12 +135,16 @@ const AdminBookings = () => {
   };
 
   const handleOpenCheckout = async (booking: BookingWithRoom) => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("user_id", booking.user_id)
-      .single();
-    setCheckoutGuestName(profile?.full_name || "Guest");
+    let name = booking.guest_name || "Guest";
+    if (booking.user_id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", booking.user_id)
+        .single();
+      name = profile?.full_name || name;
+    }
+    setCheckoutGuestName(name);
     setCheckoutBooking(booking);
     setCheckoutOpen(true);
   };
@@ -166,10 +178,16 @@ const AdminBookings = () => {
         (status === "cancelled" && settings.sms_on_booking_cancelled);
 
       if (shouldSendSMS) {
-        const { data: guestProf } = await supabase.from("profiles")
-          .select("full_name, phone").eq("user_id", booking.user_id).single();
-        if (guestProf?.phone) {
-          await sendBookingSMS(guestProf.phone, guestProf.full_name || "Guest", booking.rooms?.name || "Room", status, format(new Date(booking.check_in), "MMM dd, yyyy"), format(new Date(booking.check_out), "MMM dd, yyyy"));
+        let phone = booking.guest_phone;
+        let name = booking.guest_name || "Guest";
+        if (booking.user_id) {
+          const { data: guestProf } = await supabase.from("profiles")
+            .select("full_name, phone").eq("user_id", booking.user_id).single();
+          phone = guestProf?.phone || phone;
+          name = guestProf?.full_name || name;
+        }
+        if (phone) {
+          await sendBookingSMS(phone, name, booking.rooms?.name || "Room", status, format(new Date(booking.check_in), "MMM dd, yyyy"), format(new Date(booking.check_out), "MMM dd, yyyy"));
         }
       }
     }
@@ -211,10 +229,14 @@ const AdminBookings = () => {
       </div>
 
       {/* Filter */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h2 className="font-serif text-lg font-semibold text-foreground">Bookings</h2>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+        <div className="flex items-center gap-2">
+          <Button size="sm" className="font-sans gap-2" onClick={() => setWalkInOpen(true)}>
+            <UserPlus size={14} /> New Walk-in
+          </Button>
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Bookings</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
@@ -222,8 +244,9 @@ const AdminBookings = () => {
             <SelectItem value="checked_in">Checked In</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Bookings Table */}
@@ -343,7 +366,9 @@ const AdminBookings = () => {
                   )}
                   <div className="flex items-center gap-2">
                     <Mail size={14} className="text-muted-foreground" />
-                    <span className="font-sans text-sm text-muted-foreground text-xs">User ID: {selectedBooking.user_id.slice(0, 8)}...</span>
+                    <span className="font-sans text-sm text-muted-foreground text-xs">
+                      {selectedBooking.user_id ? `User ID: ${selectedBooking.user_id.slice(0, 8)}...` : "Walk-in guest (no account)"}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
@@ -465,6 +490,13 @@ const AdminBookings = () => {
           fetchBookings();
         }}
         guestName={checkoutGuestName}
+      />
+
+      {/* Walk-in Booking Dialog */}
+      <WalkInBookingDialog
+        open={walkInOpen}
+        onOpenChange={setWalkInOpen}
+        onCreated={fetchBookings}
       />
     </div>
   );
