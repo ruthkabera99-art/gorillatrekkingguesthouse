@@ -86,7 +86,7 @@ const WalkInBookingDialog = ({ open, onOpenChange, onCreated }: Props) => {
       total_price: total,
       special_requests: form.special_requests.trim() || null,
       status: form.check_in_now ? "checked_in" : "confirmed",
-    } as any).select("id").single();
+    } as any).select("id, invoice_number").single();
     setSaving(false);
 
     if (error) { toast.error(error.message); return; }
