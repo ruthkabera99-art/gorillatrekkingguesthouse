@@ -103,7 +103,7 @@ const WalkInBookingDialog = ({ open, onOpenChange, onCreated }: Props) => {
       children: form.guests_children,
       nightlyRate: Number(selectedRoom.base_price),
       total,
-      invoiceNumber: `INV-${(inserted as any)?.id?.slice(0, 8).toUpperCase() ?? "PREVIEW"}`,
+      invoiceNumber: (inserted as any)?.invoice_number ?? "INV-PENDING",
     });
 
     onCreated();
