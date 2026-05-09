@@ -86,7 +86,7 @@ const WalkInBookingDialog = ({ open, onOpenChange, onCreated }: Props) => {
       total_price: total,
       special_requests: form.special_requests.trim() || null,
       status: form.check_in_now ? "checked_in" : "confirmed",
-    } as any).select("id").single();
+    } as any).select("id, invoice_number").single();
     setSaving(false);
 
     if (error) { toast.error(error.message); return; }
@@ -103,7 +103,7 @@ const WalkInBookingDialog = ({ open, onOpenChange, onCreated }: Props) => {
       children: form.guests_children,
       nightlyRate: Number(selectedRoom.base_price),
       total,
-      invoiceNumber: `INV-${(inserted as any)?.id?.slice(0, 8).toUpperCase() ?? "PREVIEW"}`,
+      invoiceNumber: (inserted as any)?.invoice_number ?? "INV-PENDING",
     });
 
     onCreated();
