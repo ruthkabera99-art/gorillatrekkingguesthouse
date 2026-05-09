@@ -24,6 +24,7 @@ export type Database = {
           guests_adults: number
           guests_children: number
           id: string
+          invoice_number: string | null
           paid_at: string | null
           payment_id: string | null
           payment_method: Database["public"]["Enums"]["payment_method"] | null
@@ -44,6 +45,7 @@ export type Database = {
           guests_adults?: number
           guests_children?: number
           id?: string
+          invoice_number?: string | null
           paid_at?: string | null
           payment_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
@@ -64,6 +66,7 @@ export type Database = {
           guests_adults?: number
           guests_children?: number
           id?: string
+          invoice_number?: string | null
           paid_at?: string | null
           payment_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"] | null
