@@ -121,6 +121,21 @@ const Rooms = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Rooms & Suites — Gorilla Trekking Guest House, Musanze Rwanda</title>
+        <meta name="description" content="Browse comfortable rooms and suites at Gorilla Trekking Guest House near Volcanoes National Park. Real prices in RWF, instant confirmation, free cancellation." />
+        <link rel="canonical" href="https://gorillatrekkingguesthouse.lovable.app/rooms" />
+        <meta property="og:title" content="Rooms & Suites — Gorilla Trekking Guest House" />
+        <meta property="og:url" content="https://gorillatrekkingguesthouse.lovable.app/rooms" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://gorillatrekkingguesthouse.lovable.app/" },
+            { "@type": "ListItem", position: 2, name: "Rooms", item: "https://gorillatrekkingguesthouse.lovable.app/rooms" },
+          ],
+        })}</script>
+      </Helmet>
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="flex items-center gap-4 mb-8 sm:mb-10">
           <button onClick={() => navigate("/")} className="p-2 rounded-full border border-border hover:bg-muted transition-colors">
