@@ -171,6 +171,7 @@ const Navbar = () => {
 
         {/* Mobile controls */}
         <div className="flex items-center gap-1 lg:hidden">
+          <LanguageSwitcher />
           <button
             onClick={() => setDark(!dark)}
             className="p-2.5 rounded-xl hover:bg-muted/50 transition-colors text-foreground/60 active:scale-95"
