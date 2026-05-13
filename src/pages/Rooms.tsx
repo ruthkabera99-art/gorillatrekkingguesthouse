@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Users, ArrowLeft, Check, CalendarDays, Wifi, Wind, Tv, Coffee, Car, UtensilsCrossed, Bath, Eye, Lock, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const fmt = (n: number) => `RWF ${n.toLocaleString()}`;
 
