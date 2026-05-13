@@ -64,10 +64,8 @@ const Rooms = () => {
 
   const openBooking = (room: any) => {
     setBookingRoom(room);
-    setCheckIn("");
-    setCheckOut("");
-    setAdults(1);
-    setChildren(0);
+    if (!checkIn) setCheckIn(searchParams.get("from") || "");
+    if (!checkOut) setCheckOut(searchParams.get("to") || "");
     setSpecialRequests("");
   };
 
