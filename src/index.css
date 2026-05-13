@@ -43,6 +43,13 @@
     --beige: 40 33% 96%;
     --beige-dark: 40 20% 88%;
 
+    /* Booking-style accent tokens */
+    --booking-blue: 209 100% 38%;
+    --booking-blue-foreground: 0 0% 100%;
+    --booking-yellow: 45 99% 50%;
+    --booking-yellow-foreground: 220 40% 13%;
+    --booking-green: 142 71% 36%;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
