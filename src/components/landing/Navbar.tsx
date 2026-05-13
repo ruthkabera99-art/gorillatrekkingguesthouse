@@ -21,6 +21,16 @@ import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 const Navbar = () => {
+  const { t } = useTranslation();
+  const navLinks = [
+    { label: t("nav.rooms"), href: "#rooms", icon: Bed },
+    { label: t("nav.gallery"), href: "#gallery", icon: Camera },
+    { label: t("nav.trekking"), href: "#trekking", icon: Mountain },
+    { label: t("nav.amenities"), href: "#amenities", icon: Sparkles },
+    { label: t("nav.reviews"), href: "#reviews", icon: Star },
+    { label: t("nav.menu"), href: "/menu", isRoute: true, icon: UtensilsCrossed },
+    { label: t("nav.contact"), href: "#contact", icon: Phone },
+  ];
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dark, setDark] = useState(() => {
