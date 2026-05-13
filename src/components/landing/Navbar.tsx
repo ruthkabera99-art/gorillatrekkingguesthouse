@@ -17,16 +17,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-
-const navLinks = [
-  { label: "Rooms", href: "#rooms", icon: Bed },
-  { label: "Gallery", href: "#gallery", icon: Camera },
-  { label: "Trekking", href: "#trekking", icon: Mountain },
-  { label: "Amenities", href: "#amenities", icon: Sparkles },
-  { label: "Reviews", href: "#reviews", icon: Star },
-  { label: "Menu", href: "/menu", isRoute: true, icon: UtensilsCrossed },
-  { label: "Contact", href: "#contact", icon: Phone },
-];
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
