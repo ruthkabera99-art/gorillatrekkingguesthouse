@@ -127,6 +127,7 @@ const Navbar = () => {
 
         {/* Desktop actions */}
         <div className="hidden lg:flex items-center gap-2">
+          <LanguageSwitcher />
           <button
             onClick={() => setDark(!dark)}
             className="p-2.5 rounded-xl hover:bg-muted/80 transition-all duration-300 text-foreground/60 hover:text-foreground active:scale-95"
@@ -143,7 +144,7 @@ const Navbar = () => {
                 className="font-sans tracking-wide gap-2 rounded-xl border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
               >
                 <User size={15} />
-                Dashboard
+                {t("nav.dashboard")}
               </Button>
             </Link>
           ) : (
@@ -153,7 +154,7 @@ const Navbar = () => {
                 variant="ghost"
                 className="font-sans tracking-wide rounded-xl hover:bg-primary/5 text-foreground/70 hover:text-primary"
               >
-                Sign In
+                {t("nav.signIn")}
               </Button>
             </Link>
           )}
@@ -161,9 +162,9 @@ const Navbar = () => {
           <Link to="/rooms">
             <Button
               size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-sans tracking-wide rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 px-5"
+              className="bg-booking-blue text-booking-blue-foreground hover:bg-booking-blue/90 font-sans font-semibold tracking-wide rounded-xl shadow-lg transition-all duration-300 px-5"
             >
-              Book Now
+              {t("nav.bookNow")}
             </Button>
           </Link>
         </div>
