@@ -32,10 +32,11 @@ const Rooms = () => {
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookingRoom, setBookingRoom] = useState<any>(null);
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
+  const [searchParams] = useSearchParams();
+  const [checkIn, setCheckIn] = useState(searchParams.get("from") || "");
+  const [checkOut, setCheckOut] = useState(searchParams.get("to") || "");
+  const [adults, setAdults] = useState(Number(searchParams.get("adults")) || 1);
+  const [children, setChildren] = useState(Number(searchParams.get("children")) || 0);
   const [specialRequests, setSpecialRequests] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
