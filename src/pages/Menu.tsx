@@ -235,6 +235,11 @@ const Menu = () => {
   if (!user && !guest) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Helmet>
+          <title>Restaurant & Bar Menu — Gorilla Trekking Guest House</title>
+          <meta name="description" content="Order online from our restaurant and bar. Authentic Rwandan cuisine, international dishes, and curated drinks." />
+          <link rel="canonical" href="https://gorillatrekkingguesthouse.lovable.app/menu" />
+        </Helmet>
         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-sm">
           <Card className="bg-card border border-border">
             <CardContent className="p-6 space-y-5">
