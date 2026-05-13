@@ -35,6 +35,13 @@ export default {
           DEFAULT: "hsl(var(--beige))",
           dark: "hsl(var(--beige-dark))",
         },
+        booking: {
+          blue: "hsl(var(--booking-blue))",
+          "blue-foreground": "hsl(var(--booking-blue-foreground))",
+          yellow: "hsl(var(--booking-yellow))",
+          "yellow-foreground": "hsl(var(--booking-yellow-foreground))",
+          green: "hsl(var(--booking-green))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",

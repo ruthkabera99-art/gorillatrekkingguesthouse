@@ -17,18 +17,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-
-const navLinks = [
-  { label: "Rooms", href: "#rooms", icon: Bed },
-  { label: "Gallery", href: "#gallery", icon: Camera },
-  { label: "Trekking", href: "#trekking", icon: Mountain },
-  { label: "Amenities", href: "#amenities", icon: Sparkles },
-  { label: "Reviews", href: "#reviews", icon: Star },
-  { label: "Menu", href: "/menu", isRoute: true, icon: UtensilsCrossed },
-  { label: "Contact", href: "#contact", icon: Phone },
-];
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const Navbar = () => {
+  const { t } = useTranslation();
+  const navLinks = [
+    { label: t("nav.rooms"), href: "#rooms", icon: Bed },
+    { label: t("nav.gallery"), href: "#gallery", icon: Camera },
+    { label: t("nav.trekking"), href: "#trekking", icon: Mountain },
+    { label: t("nav.amenities"), href: "#amenities", icon: Sparkles },
+    { label: t("nav.reviews"), href: "#reviews", icon: Star },
+    { label: t("nav.menu"), href: "/menu", isRoute: true, icon: UtensilsCrossed },
+    { label: t("nav.contact"), href: "#contact", icon: Phone },
+  ];
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dark, setDark] = useState(() => {
@@ -125,6 +127,7 @@ const Navbar = () => {
 
         {/* Desktop actions */}
         <div className="hidden lg:flex items-center gap-2">
+          <LanguageSwitcher />
           <button
             onClick={() => setDark(!dark)}
             className="p-2.5 rounded-xl hover:bg-muted/80 transition-all duration-300 text-foreground/60 hover:text-foreground active:scale-95"
@@ -141,7 +144,7 @@ const Navbar = () => {
                 className="font-sans tracking-wide gap-2 rounded-xl border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
               >
                 <User size={15} />
-                Dashboard
+                {t("nav.dashboard")}
               </Button>
             </Link>
           ) : (
@@ -151,7 +154,7 @@ const Navbar = () => {
                 variant="ghost"
                 className="font-sans tracking-wide rounded-xl hover:bg-primary/5 text-foreground/70 hover:text-primary"
               >
-                Sign In
+                {t("nav.signIn")}
               </Button>
             </Link>
           )}
@@ -159,15 +162,16 @@ const Navbar = () => {
           <Link to="/rooms">
             <Button
               size="sm"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-sans tracking-wide rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 px-5"
+              className="bg-booking-blue text-booking-blue-foreground hover:bg-booking-blue/90 font-sans font-semibold tracking-wide rounded-xl shadow-lg transition-all duration-300 px-5"
             >
-              Book Now
+              {t("nav.bookNow")}
             </Button>
           </Link>
         </div>
 
         {/* Mobile controls */}
         <div className="flex items-center gap-1 lg:hidden">
+          <LanguageSwitcher />
           <button
             onClick={() => setDark(!dark)}
             className="p-2.5 rounded-xl hover:bg-muted/50 transition-colors text-foreground/60 active:scale-95"

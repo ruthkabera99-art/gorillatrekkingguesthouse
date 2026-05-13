@@ -1,121 +1,57 @@
+## Goal
+Transform the landing site into a Booking.com-style, conversion-focused, internationally-discoverable booking site. Keep the existing dark luxury feel for branded sections but adopt a brighter, trust-driven booking layer (search bar, room cards with prices/ratings, sticky book CTA, trust badges).
 
-
-# 🏨 Premium Hotel Booking Platform
-
-A luxurious, full-stack hotel booking website with elegant design, real-time booking, secure payments, and comprehensive admin management.
-
----
-
-## Phase 1: Foundation & Stunning Landing Page
-
-### Design System
-- Luxury color palette: gold (#C5A572), dark navy (#1B2A4A), warm beige (#F5F0EB), crisp white
-- Glassmorphism cards, soft shadows, smooth fade/scale animations
-- Custom typography with elegant serif headings and clean sans-serif body text
-- Dark/Light mode toggle
-
-### Landing Page
-- **Hero Section**: Full-screen background video (hotel interior/pool) with overlay text and "Book Now" CTA
-- **Room Showcase**: Animated cards for room types (Standard, Deluxe, Executive, Presidential Suite) with pricing
-- **Amenities Section**: Icon grid highlighting WiFi, Pool, Spa, Restaurant, Fitness Center
-- **Reviews & Testimonials**: Carousel of guest reviews with ratings
-- **Google Maps Embed**: Interactive map showing hotel location
-- **Contact Section**: Contact form with hotel details
-- **Footer**: Links, social media, newsletter signup
+This is large — I'll ship it in **three phases** so each one is reviewable.
 
 ---
 
-## Phase 2: Backend Setup (Supabase + Lovable Cloud)
+## Phase 1 — Booking-grade homepage + SEO foundations (this approval)
 
-### Database Tables
-- **rooms**: id, name, type, description, base_price, capacity, amenities, images, status
-- **bookings**: id, user_id, room_id, check_in, check_out, guests_adults, guests_children, total_price, status, payment_id
-- **reviews**: id, user_id, booking_id, rating, comment, created_at
-- **promotions**: id, code, discount_percent, valid_from, valid_to, active
-- **profiles**: id, user_id, full_name, phone, avatar, loyalty_points
+**Visual / UX**
+- New full-width hero with cinematic photo + tagline + a real **booking search widget** (check-in, check-out, guests, rooms) wired to deep-link into `/rooms?from=...&to=...&guests=...`.
+- Trust strip below hero: star rating, "Booking Partner", "Free cancellation", "Best price guarantee", "Pay at property", payment logos.
+- Refreshed `RoomShowcase` → Booking.com-style horizontal cards: photo carousel, amenities icons, "from RWF X / night", rating, "View deal" button.
+- Sticky bottom-bar on mobile with "Check availability".
+- Keep brand navy/gold but introduce booking-blue (`#0071c2`) and yellow (`#feba02`) as CTA accents in `index.css` design tokens.
+- New "Why book direct" section (3 perks) and prominent Reviews section pulling existing testimonials into a Booking-style score card (e.g. "9.2 Superb · 142 reviews").
+- "Explore Musanze" mini-section (location, distance to Volcanoes NP, airport transfer) with map embed.
 
-### Authentication
-- Email/password signup & login
-- Secure session management
-- Role-based access (guest vs admin via separate user_roles table)
+**SEO worldwide (Google / Google Hotels)**
+- Install `react-helmet-async` + add per-route `<Helmet>` to `Index`, `Rooms`, `RoomDetail`, `Menu`.
+- Expanded JSON-LD in `index.html`: full `Hotel` schema (address, geo, telephone, amenityFeature, starRating, priceRange, aggregateRating placeholder).
+- Per-room `Product` + `LodgingBusiness` JSON-LD on `RoomDetail` with price, currency, availability.
+- `BreadcrumbList` on inner pages, `FAQPage` on homepage FAQ.
+- `hreflang` tags for `en` / `fr`, canonicals, robots.txt + dynamic `sitemap.xml` generator script (predev/prebuild) covering `/`, `/rooms`, every room id, `/menu`.
+- Replace generic `<title>`/description with keyword-optimized strings ("Gorilla Trekking Guest House — Hotel near Volcanoes NP, Musanze Rwanda | Book Direct").
 
----
+**Languages**
+- Add `react-i18next` with `en` + `fr` JSON dictionaries covering nav, hero, room card labels, footer, search widget. Language switcher in navbar (🇬🇧 / 🇫🇷). Persist choice in `localStorage`. Set `<html lang>` dynamically.
+- Translate the most visible copy first; deeper page text in Phase 2.
 
-## Phase 3: Room Search & Booking System
-
-### Search & Filters
-- Check-in / Check-out date pickers
-- Guest selection (adults + children dropdowns)
-- Room type filter (Standard, Deluxe, Executive, Presidential)
-- Price range slider
-- Real-time availability checking against bookings table
-
-### Room Details Page
-- Image gallery slider with thumbnails
-- Full amenities list with icons
-- Dynamic pricing display (based on dates and demand)
-- Guest capacity info
-- "Book Now" button leading to checkout
-
-### Booking Flow
-- Date & guest confirmation → Room selection → Payment → Confirmation
-- Animated step transitions
-- Booking confirmation page with invoice summary and booking reference
+**Trust / "list us on Airbnb & Booking.com"**
+- Footer "Find us on" row with Booking.com / Airbnb / TripAdvisor / Google logos. Each link = `#` placeholder with a tooltip "Listing coming soon" — you paste the real URLs once you create those host accounts (I'll explain how).
 
 ---
 
-## Phase 4: Stripe Payment Integration
+## Phase 2 (next approval) — Rooms catalog + detail
+Booking.com-style filters (price, amenities, capacity), photo galleries with lightbox, calendar availability, "X people booked this in last 24h" social proof, multi-room comparison.
 
-- Secure Stripe checkout for room bookings
-- Payment confirmation and receipt
-- Booking status updates upon successful payment
-
----
-
-## Phase 5: Customer Dashboard
-
-- **My Bookings**: List of current and past reservations with status
-- **Booking Details**: View full invoice, room info, dates
-- **Cancel / Reschedule**: Cancel upcoming bookings or request date changes
-- **Loyalty Points**: View earned points and rewards tier
-- **Profile Management**: Update name, phone, avatar
+## Phase 3 — Conversion polish
+Live currency switcher (RWF/USD/EUR), exit-intent discount, FAQ + Policies page, structured reviews via Google Place ID, full FR translations of long-form copy, performance tuning for Lighthouse 95+.
 
 ---
 
-## Phase 6: Admin Dashboard
+## Important caveat about Airbnb / Booking.com
+These are closed marketplaces — code on this site cannot publish a listing there. To appear on them you need to:
+1. Create a host account on each (Airbnb → airbnb.com/host; Booking.com → join.booking.com).
+2. Add property details, photos, calendar, pricing.
+3. Once live, share the listing URLs with me and I'll wire the footer/CTAs to point at them and add their review badges.
 
-- **Room Management**: Add, edit, delete rooms; update images and amenities
-- **Pricing Control**: Update base prices and set seasonal pricing
-- **Booking Overview**: View all bookings with filters (date, status, room type)
-- **Analytics Dashboard**: Occupancy rate chart, revenue over time, booking trends (using Recharts)
-- **Promotions Manager**: Create/edit discount codes with validity dates
-- **Reviews Moderation**: View and manage guest reviews
-
----
-
-## Phase 7: Advanced Features
-
-### AI-Powered Room Recommendations
-- Use Lovable AI to suggest rooms based on guest preferences, travel dates, and past bookings
-
-### Loyalty & Promotions
-- Points earned per booking
-- Discount coupon system with validation at checkout
-- Tier-based rewards (Silver, Gold, Platinum)
-
-### Multi-Language Support
-- Language switcher in the header
-- Support for English + additional languages via i18n
-
-### SEO & Performance
-- Semantic HTML structure
-- Meta tags and Open Graph data
-- Optimized image loading
-- Fast page transitions
+Lovable handles your **own** booking site + Google discoverability. The OTAs are a separate business signup.
 
 ---
 
-## Fully Responsive
-- Desktop-first design that gracefully adapts to tablet and mobile
-- Mobile-friendly booking flow and navigation with hamburger menu
-
+## Technical details
+- Files touched (Phase 1): `index.html`, `src/main.tsx` (HelmetProvider + i18n init), `src/App.tsx` (no route changes), `src/components/landing/*` (Navbar, Hero, RoomShowcase, Footer + new `BookingSearchBar.tsx`, `TrustStrip.tsx`, `WhyBookDirect.tsx`, `LocationSection.tsx`, `ReviewScoreCard.tsx`, `LanguageSwitcher.tsx`), `src/pages/Index.tsx`, `src/pages/Rooms.tsx` (read query params), `src/pages/RoomDetail.tsx` (Product schema), `src/index.css` + `tailwind.config.ts` (booking-blue/yellow tokens), new `src/i18n/{index.ts,en.json,fr.json}`, `scripts/generate-sitemap.ts`, `public/robots.txt`, `package.json` predev/prebuild, deps: `react-helmet-async`, `react-i18next`, `i18next`, `i18next-browser-languagedetector`.
+- No DB changes.
+- All new colors registered as HSL semantic tokens — no inline color classes.

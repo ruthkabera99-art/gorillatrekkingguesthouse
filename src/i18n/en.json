@@ -1,0 +1,105 @@
+{
+  "nav": {
+    "rooms": "Rooms",
+    "gallery": "Gallery",
+    "trekking": "Trekking",
+    "amenities": "Amenities",
+    "reviews": "Reviews",
+    "menu": "Menu",
+    "contact": "Contact",
+    "signIn": "Sign In",
+    "dashboard": "Dashboard",
+    "bookNow": "Book Now"
+  },
+  "hero": {
+    "badge": "Rwanda's Premier Guest House",
+    "title1": "Gorilla Trekking",
+    "title2": "Guest House",
+    "subtitle": "Authentic Rwandan hospitality, breathtaking mountain views, and unforgettable gorilla trekking adventures.",
+    "location": "Musanze, Rwanda",
+    "rating": "4.9 Rating",
+    "bookStay": "Book Your Stay",
+    "orderOnline": "Order Online"
+  },
+  "search": {
+    "title": "Find your perfect stay",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "guests": "Guests",
+    "rooms": "Rooms",
+    "adults": "Adults",
+    "children": "Children",
+    "search": "Search availability",
+    "addDate": "Add date",
+    "guest": "guest",
+    "guestsPlural": "guests",
+    "roomLabel": "room",
+    "roomsPlural": "rooms"
+  },
+  "trust": {
+    "rating": "Exceptional",
+    "reviews": "verified reviews",
+    "freeCancel": "Free cancellation",
+    "bestPrice": "Best price guarantee",
+    "payAtProperty": "Pay at property",
+    "instantConfirm": "Instant confirmation",
+    "verifiedHost": "Verified host"
+  },
+  "whyDirect": {
+    "title": "Why book direct with us",
+    "subtitle": "Better rates, better service — straight from the source.",
+    "perk1Title": "Best price, guaranteed",
+    "perk1Body": "Skip the middleman fees. We always match or beat OTA prices.",
+    "perk2Title": "Free cancellation",
+    "perk2Body": "Plans change. Cancel up to 48 hours before check-in for a full refund.",
+    "perk3Title": "Welcome perks",
+    "perk3Body": "Complimentary Rwandan coffee on arrival and a free room upgrade when available."
+  },
+  "location": {
+    "title": "Perfectly placed in Musanze",
+    "subtitle": "At the gateway to Volcanoes National Park",
+    "vnp": "Volcanoes National Park",
+    "vnpDesc": "15 min drive — meeting point for gorilla trekking",
+    "airport": "Kigali Int'l Airport",
+    "airportDesc": "2.5 h drive — airport transfers available",
+    "town": "Musanze town center",
+    "townDesc": "5 min walk — restaurants, banks & ATMs",
+    "lake": "Lake Burera",
+    "lakeDesc": "30 min drive — kayaking & scenic views"
+  },
+  "rooms": {
+    "sectionLabel": "Accommodations",
+    "title": "Our Finest Rooms",
+    "from": "from",
+    "perNight": "/ night",
+    "viewDeal": "View deal",
+    "guests": "guests",
+    "exploreAll": "Explore all rooms",
+    "freeWifi": "Free WiFi",
+    "breakfast": "Breakfast"
+  },
+  "review": {
+    "score": "Exceptional",
+    "scoreNumber": "9.4",
+    "based": "Based on",
+    "reviews": "guest reviews",
+    "rated": "Rated by guests from",
+    "categories": {
+      "cleanliness": "Cleanliness",
+      "comfort": "Comfort",
+      "location": "Location",
+      "staff": "Staff",
+      "value": "Value for money",
+      "facilities": "Facilities"
+    }
+  },
+  "footer": {
+    "tagline": "Authentic Rwandan hospitality at the foot of the Virunga Mountains.",
+    "explore": "Explore",
+    "support": "Support",
+    "findUs": "Find us on",
+    "newsletter": "Stay updated",
+    "newsletterDesc": "Subscribe for exclusive offers and trekking tips.",
+    "rights": "All rights reserved."
+  }
+}

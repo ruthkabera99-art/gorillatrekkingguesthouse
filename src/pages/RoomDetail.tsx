@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,6 +94,33 @@ const RoomDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{`${room.name} — Gorilla Trekking Guest House, Musanze`}</title>
+        <meta name="description" content={`${room.name}: ${(room.description || "Boutique room near Volcanoes National Park.").slice(0, 150)} From ${fmt(Number(room.base_price))} per night.`} />
+        <link rel="canonical" href={`https://gorillatrekkingguesthouse.lovable.app/rooms/${room.id}`} />
+        <meta property="og:title" content={`${room.name} — Gorilla Trekking Guest House`} />
+        <meta property="og:type" content="product" />
+        <meta property="og:image" content={images[0]} />
+        <meta property="og:url" content={`https://gorillatrekkingguesthouse.lovable.app/rooms/${room.id}`} />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "HotelRoom",
+          name: room.name,
+          description: room.description,
+          image: images,
+          occupancy: { "@type": "QuantitativeValue", maxValue: room.capacity },
+          amenityFeature: (room.amenities || []).map((a: string) => ({
+            "@type": "LocationFeatureSpecification", name: a, value: true,
+          })),
+          offers: {
+            "@type": "Offer",
+            price: Number(room.base_price),
+            priceCurrency: "RWF",
+            availability: "https://schema.org/InStock",
+            url: `https://gorillatrekkingguesthouse.lovable.app/rooms/${room.id}`,
+          },
+        })}</script>
+      </Helmet>
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-6 sm:mb-8">
           <ArrowLeft size={16} /> Back
