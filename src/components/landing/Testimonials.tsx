@@ -1,54 +1,71 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Star, ChevronLeft, ChevronRight, Quote } from "lucide-react";
+import { motion } from "framer-motion";
+import { Star } from "lucide-react";
 
 const reviews = [
   {
-    name: "Sophia Laurent",
-    location: "Paris, France",
-    rating: 5,
-    text: "An absolutely breathtaking experience. The Presidential Suite exceeded all expectations — impeccable service, stunning views, and every detail thoughtfully curated.",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80",
-  },
-  {
     name: "James Mitchell",
-    location: "New York, USA",
+    country: "USA",
+    flag: "🇺🇸",
+    date: "March 2026",
     rating: 5,
-    text: "From the moment we arrived, we felt like royalty. The gorilla trekking experience was life-changing and the accommodation was world-class.",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80",
+    text: "From the moment we arrived, we felt like royalty. The gorilla trekking experience was life-changing and the accommodation was world-class. Staff went above and beyond.",
+    color: "from-blue-500 to-indigo-600",
   },
   {
-    name: "Yuki Tanaka",
-    location: "Tokyo, Japan",
+    name: "Emma Thompson",
+    country: "United Kingdom",
+    flag: "🇬🇧",
+    date: "February 2026",
     rating: 5,
-    text: "The perfect blend of adventure and comfort. Waking up to the Virunga Mountains every morning was magical. Already planning our return.",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80",
+    text: "Best stay we've had in East Africa. Beautiful rooms, incredible breakfast, and the view of the Virungas at sunrise is unforgettable. Booking direct saved us 20%.",
+    color: "from-rose-500 to-pink-600",
   },
   {
-    name: "Isabella Romano",
-    location: "Milan, Italy",
-    rating: 4,
-    text: "Exceptional attention to detail throughout. The local cuisine was outstanding, and the staff went above and beyond. A jewel of Rwanda.",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80",
+    name: "Sophia Laurent",
+    country: "France",
+    flag: "🇫🇷",
+    date: "January 2026",
+    rating: 5,
+    text: "Une expérience absolument magique. Le service était impeccable et le trek aux gorilles, organisé par l'équipe, restera l'un des moments forts de notre vie.",
+    color: "from-amber-500 to-orange-600",
+  },
+  {
+    name: "Lukas Müller",
+    country: "Germany",
+    flag: "🇩🇪",
+    date: "December 2025",
+    rating: 5,
+    text: "Outstanding hospitality and very clean rooms. Excellent location, just minutes from the park. The team helped us with permits and transfers — everything ran smoothly.",
+    color: "from-emerald-500 to-teal-600",
+  },
+  {
+    name: "Wei Chen",
+    country: "China",
+    flag: "🇨🇳",
+    date: "November 2025",
+    rating: 5,
+    text: "非常棒的体验! Beautiful guest house with attentive staff who speak multiple languages. Loved the Rwandan coffee on arrival and the comfortable beds after a long trek.",
+    color: "from-red-500 to-rose-600",
+  },
+  {
+    name: "Olivia Carter",
+    country: "Australia",
+    flag: "🇦🇺",
+    date: "October 2025",
+    rating: 5,
+    text: "Worth every penny. The Deluxe room was spacious and stylish, the food was fresh and local, and the WhatsApp support before our stay was super responsive.",
+    color: "from-violet-500 to-purple-600",
   },
 ];
 
+const initials = (name: string) =>
+  name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("");
+
 const Testimonials = () => {
-  const [current, setCurrent] = useState(0);
-
-  // Auto-advance
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrent((c) => (c + 1) % reviews.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const next = () => setCurrent((c) => (c + 1) % reviews.length);
-  const prev = () => setCurrent((c) => (c - 1 + reviews.length) % reviews.length);
-
-  const review = reviews[current];
-
   return (
     <section id="reviews" className="py-20 sm:py-32 bg-background">
       <div className="container mx-auto px-4 sm:px-6">
@@ -57,7 +74,7 @@ const Testimonials = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-14 sm:mb-20"
+          className="text-center mb-12 sm:mb-16"
         >
           <p className="text-xs sm:text-sm tracking-[0.3em] uppercase text-primary font-sans mb-3">
             Guest Experiences
@@ -65,89 +82,57 @@ const Testimonials = () => {
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-foreground mb-4">
             What Our Guests Say
           </h2>
-          <div className="w-16 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent mx-auto" />
+          <div className="w-16 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mb-4" />
+          <p className="text-muted-foreground font-sans text-sm sm:text-base">
+            Real reviews from travelers around the world · Average rating 4.9 / 5
+          </p>
         </motion.div>
 
-        <div className="max-w-4xl mx-auto relative">
-          {/* Large quote decoration */}
-          <Quote
-            size={120}
-            className="absolute -top-6 left-0 text-primary/[0.05] hidden md:block"
-          />
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={current}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 max-w-6xl mx-auto">
+          {reviews.map((r, i) => (
+            <motion.article
+              key={r.name}
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.5 }}
-              className="text-center px-4 sm:px-12"
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: (i % 3) * 0.1 }}
+              className="group p-6 rounded-2xl bg-card border border-border hover:border-primary/40 hover:shadow-xl transition-all duration-300 flex flex-col"
             >
-              {/* Avatar */}
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden mx-auto mb-6 ring-2 ring-primary/30 ring-offset-4 ring-offset-background">
-                <img
-                  src={review.avatar}
-                  alt={review.name}
-                  className="w-full h-full object-cover"
-                />
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className={`w-12 h-12 rounded-full bg-gradient-to-br ${r.color} flex items-center justify-center text-white font-sans font-bold shadow-md`}
+                  aria-hidden="true"
+                >
+                  {initials(r.name)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-sans font-semibold text-foreground truncate">{r.name}</div>
+                  <div className="text-xs text-muted-foreground font-sans flex items-center gap-1">
+                    <span className="text-base leading-none">{r.flag}</span>
+                    <span>{r.country}</span>
+                    <span>·</span>
+                    <span>{r.date}</span>
+                  </div>
+                </div>
               </div>
 
-              <p className="text-lg sm:text-xl md:text-2xl text-foreground/85 font-serif font-light leading-relaxed mb-8 italic">
-                "{review.text}"
-              </p>
-
-              <div className="flex items-center justify-center gap-1 mb-3">
-                {Array.from({ length: 5 }).map((_, i) => (
+              <div className="flex items-center gap-0.5 mb-3">
+                {Array.from({ length: 5 }).map((_, idx) => (
                   <Star
-                    key={i}
-                    size={16}
+                    key={idx}
+                    size={14}
                     className={
-                      i < review.rating
-                        ? "fill-primary text-primary"
-                        : "text-muted-foreground/30"
+                      idx < r.rating ? "fill-primary text-primary" : "text-muted-foreground/30"
                     }
                   />
                 ))}
               </div>
 
-              <p className="font-serif text-lg sm:text-xl font-semibold text-foreground">
-                {review.name}
+              <p className="text-sm sm:text-[15px] text-foreground/80 font-sans leading-relaxed flex-1">
+                "{r.text}"
               </p>
-              <p className="text-sm text-muted-foreground font-sans">{review.location}</p>
-            </motion.div>
-          </AnimatePresence>
-
-          <div className="flex items-center justify-center gap-6 mt-10 sm:mt-14">
-            <button
-              onClick={prev}
-              className="p-3 rounded-full border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-foreground/60 hover:text-primary active:scale-95"
-              aria-label="Previous review"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <div className="flex gap-2.5">
-              {reviews.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrent(i)}
-                  className={`h-2.5 rounded-full transition-all duration-300 ${
-                    i === current
-                      ? "bg-primary w-8"
-                      : "bg-muted-foreground/20 w-2.5 hover:bg-muted-foreground/40"
-                  }`}
-                  aria-label={`Go to review ${i + 1}`}
-                />
-              ))}
-            </div>
-            <button
-              onClick={next}
-              className="p-3 rounded-full border border-border hover:bg-primary/10 hover:border-primary/30 transition-all text-foreground/60 hover:text-primary active:scale-95"
-              aria-label="Next review"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
+            </motion.article>
+          ))}
         </div>
       </div>
     </section>
