@@ -3,6 +3,7 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import "./index.css";
 import "./i18n";
+import { CurrencyProvider } from "./contexts/CurrencyContext";
 
 // Apply saved theme or default to dark
 const savedTheme = localStorage.getItem("theme");
@@ -14,6 +15,8 @@ if (!savedTheme || savedTheme === "dark") {
 
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>
-    <App />
+    <CurrencyProvider>
+      <App />
+    </CurrencyProvider>
   </HelmetProvider>
 );
