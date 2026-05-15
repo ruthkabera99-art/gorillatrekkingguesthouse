@@ -1,0 +1,105 @@
+{
+  "nav": {
+    "rooms": "Habitaciones",
+    "gallery": "Galería",
+    "trekking": "Trekking",
+    "amenities": "Servicios",
+    "reviews": "Opiniones",
+    "menu": "Menú",
+    "contact": "Contacto",
+    "signIn": "Iniciar sesión",
+    "dashboard": "Panel",
+    "bookNow": "Reservar"
+  },
+  "hero": {
+    "badge": "La casa de huéspedes más exclusiva de Ruanda",
+    "title1": "Gorilla Trekking",
+    "title2": "Guest House",
+    "subtitle": "Hospitalidad ruandesa auténtica, vistas impresionantes a la montaña y aventuras inolvidables con gorilas.",
+    "location": "Musanze, Ruanda",
+    "rating": "4.9 valoración",
+    "bookStay": "Reserva tu estancia",
+    "orderOnline": "Pedir online"
+  },
+  "search": {
+    "title": "Encuentra tu estancia perfecta",
+    "checkIn": "Llegada",
+    "checkOut": "Salida",
+    "guests": "Huéspedes",
+    "rooms": "Habitaciones",
+    "adults": "Adultos",
+    "children": "Niños",
+    "search": "Buscar",
+    "addDate": "Añadir fecha",
+    "guest": "huésped",
+    "guestsPlural": "huéspedes",
+    "roomLabel": "habitación",
+    "roomsPlural": "habitaciones"
+  },
+  "trust": {
+    "rating": "Excepcional",
+    "reviews": "opiniones verificadas",
+    "freeCancel": "Cancelación gratis",
+    "bestPrice": "Mejor precio garantizado",
+    "payAtProperty": "Paga en el alojamiento",
+    "instantConfirm": "Confirmación instantánea",
+    "verifiedHost": "Anfitrión verificado"
+  },
+  "whyDirect": {
+    "title": "Por qué reservar directamente",
+    "subtitle": "Mejores tarifas, mejor servicio — directo del origen.",
+    "perk1Title": "Mejor precio garantizado",
+    "perk1Body": "Sin comisiones de intermediarios. Igualamos o superamos los precios de OTAs.",
+    "perk2Title": "Cancelación gratis",
+    "perk2Body": "Los planes cambian. Cancela hasta 48 h antes de la llegada con reembolso completo.",
+    "perk3Title": "Beneficios de bienvenida",
+    "perk3Body": "Café ruandés de cortesía a la llegada y mejora de habitación gratuita si está disponible."
+  },
+  "location": {
+    "title": "Perfectamente situado en Musanze",
+    "subtitle": "A las puertas del Parque Nacional de los Volcanes",
+    "vnp": "Parque Nacional de los Volcanes",
+    "vnpDesc": "15 min en coche — punto de encuentro para trekking",
+    "airport": "Aeropuerto Int. de Kigali",
+    "airportDesc": "2.5 h en coche — traslados disponibles",
+    "town": "Centro de Musanze",
+    "townDesc": "5 min a pie — restaurantes, bancos y cajeros",
+    "lake": "Lago Burera",
+    "lakeDesc": "30 min en coche — kayak y vistas panorámicas"
+  },
+  "rooms": {
+    "sectionLabel": "Alojamientos",
+    "title": "Nuestras mejores habitaciones",
+    "from": "desde",
+    "perNight": "/ noche",
+    "viewDeal": "Ver oferta",
+    "guests": "huéspedes",
+    "exploreAll": "Ver todas las habitaciones",
+    "freeWifi": "WiFi gratis",
+    "breakfast": "Desayuno"
+  },
+  "review": {
+    "score": "Excepcional",
+    "scoreNumber": "9.4",
+    "based": "Basado en",
+    "reviews": "opiniones de huéspedes",
+    "rated": "Valorado por viajeros de",
+    "categories": {
+      "cleanliness": "Limpieza",
+      "comfort": "Confort",
+      "location": "Ubicación",
+      "staff": "Personal",
+      "value": "Relación calidad-precio",
+      "facilities": "Instalaciones"
+    }
+  },
+  "footer": {
+    "tagline": "Hospitalidad ruandesa auténtica al pie de las montañas Virunga.",
+    "explore": "Explorar",
+    "support": "Ayuda",
+    "findUs": "Encuéntranos en",
+    "newsletter": "Mantente al día",
+    "newsletterDesc": "Suscríbete para ofertas exclusivas y consejos de trekking.",
+    "rights": "Todos los derechos reservados."
+  }
+}

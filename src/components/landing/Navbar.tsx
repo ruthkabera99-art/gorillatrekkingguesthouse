@@ -19,6 +19,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
+import CurrencySwitcher from "./CurrencySwitcher";
 
 const Navbar = () => {
   const { t } = useTranslation();
@@ -70,7 +71,8 @@ const Navbar = () => {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      style={{ top: "var(--banner-h, 0px)" }}
+      className={`fixed left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
           ? "bg-card/95 backdrop-blur-xl shadow-[0_4px_30px_-4px_hsl(var(--primary)/0.08)] border-b border-primary/10"
           : "bg-gradient-to-b from-black/40 to-transparent"
@@ -127,6 +129,7 @@ const Navbar = () => {
 
         {/* Desktop actions */}
         <div className="hidden lg:flex items-center gap-2">
+          <CurrencySwitcher />
           <LanguageSwitcher />
           <button
             onClick={() => setDark(!dark)}
@@ -171,6 +174,7 @@ const Navbar = () => {
 
         {/* Mobile controls */}
         <div className="flex items-center gap-1 lg:hidden">
+          <CurrencySwitcher />
           <LanguageSwitcher />
           <button
             onClick={() => setDark(!dark)}

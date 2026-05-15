@@ -1,69 +1,66 @@
 import { motion } from "framer-motion";
-import { Clock, Users, Mountain, Star, Check } from "lucide-react";
+import { Clock, Users, Mountain, Star, Check, Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const packages = [
   {
-    name: "Silver Trek",
-    price: 750,
-    duration: "1 Day",
-    groupSize: "Up to 8",
+    name: "Half-Day Trek",
+    priceRwf: 150000,
+    duration: "Half Day (4 h)",
+    groupSize: "Up to 10",
+    difficulty: "Easy",
     highlight: false,
     features: [
-      "Guided gorilla trekking permit",
-      "Park entrance fees included",
-      "Light packed lunch",
+      "Guided forest hike with ranger",
+      "Park entrance fee included",
+      "Bottled water & light snack",
       "Hotel pickup & drop-off",
-      "Certificate of participation",
+      "Suitable for all fitness levels",
     ],
   },
   {
-    name: "Gold Safari",
-    price: 1500,
-    duration: "2 Days / 1 Night",
-    groupSize: "Up to 6",
+    name: "Full-Day Gorilla Trek",
+    priceRwf: 350000,
+    duration: "1 Day (8–10 h)",
+    groupSize: "Up to 8",
+    difficulty: "Moderate",
     highlight: true,
     features: [
-      "Everything in Silver Trek",
-      "Overnight luxury camp stay",
-      "Full-board gourmet meals",
-      "Golden monkey tracking",
-      "Professional photography session",
-      "Exclusive trail access",
+      "Gorilla trekking permit assistance",
+      "Park entrance & ranger fees",
+      "Hot packed lunch + drinks",
+      "Hotel pickup & drop-off in 4x4",
+      "Certificate of participation",
+      "Photographer-friendly stops",
     ],
   },
   {
-    name: "Platinum Explorer",
-    price: 2800,
+    name: "3-Day Adventure Package",
+    priceRwf: 800000,
     duration: "3 Days / 2 Nights",
-    groupSize: "Up to 4",
+    groupSize: "Up to 6",
+    difficulty: "Challenging",
     highlight: false,
     features: [
-      "Everything in Gold Safari",
-      "Private guide & tracker",
-      "Helicopter scenic flight",
-      "Spa & wellness session",
-      "Cultural village experience",
-      "Personalized souvenir kit",
+      "Gorilla + golden monkey tracking",
+      "2 nights at Gorilla Trekking Guest House",
+      "All meals & drinks included",
+      "Cultural village visit (Iby'iwacu)",
+      "Twin Lakes Burera & Ruhondo tour",
+      "Private guide & 4x4 transfers",
     ],
   },
 ];
 
 const TrekkingTours = () => {
   const navigate = useNavigate();
+  const { format } = useCurrency();
 
   return (
-    <section className="relative py-20 sm:py-32 overflow-hidden">
-      {/* Background */}
+    <section id="trekking" className="relative py-20 sm:py-32 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/[0.03] to-background" />
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C5A572' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-        }}
-      />
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         <motion.div
@@ -81,9 +78,8 @@ const TrekkingTours = () => {
           </h2>
           <div className="w-16 h-[2px] bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mb-6" />
           <p className="text-muted-foreground font-sans max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
-            Venture into the heart of Volcanoes National Park with our curated
-            trekking experiences — from single-day encounters to immersive
-            multi-day explorations.
+            Curated experiences in Volcanoes National Park — choose the adventure that
+            fits your schedule and fitness level.
           </p>
         </motion.div>
 
@@ -113,38 +109,37 @@ const TrekkingTours = () => {
                   {pkg.name}
                 </h3>
 
-                <div className="flex items-baseline gap-1 mb-6">
+                <div className="flex items-baseline gap-1 mb-4">
                   <span className="text-3xl sm:text-4xl font-serif font-bold text-primary">
-                    ${pkg.price.toLocaleString()}
+                    {format(pkg.priceRwf)}
                   </span>
-                  <span className="text-sm text-muted-foreground font-sans">
-                    / person
-                  </span>
+                  <span className="text-sm text-muted-foreground font-sans">/ person</span>
                 </div>
 
-                <div className="flex items-center gap-4 mb-6 text-sm text-muted-foreground font-sans">
+                <div className="flex items-center gap-3 mb-6 text-xs sm:text-sm text-muted-foreground font-sans flex-wrap">
                   <span className="flex items-center gap-1.5">
-                    <Clock size={14} className="text-primary" />
-                    {pkg.duration}
+                    <Clock size={14} className="text-primary" /> {pkg.duration}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Users size={14} className="text-primary" />
-                    {pkg.groupSize}
+                    <Users size={14} className="text-primary" /> {pkg.groupSize}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Gauge size={14} className="text-primary" /> {pkg.difficulty}
                   </span>
                 </div>
 
                 <div className="w-full h-px bg-border/50 mb-6" />
 
-                <ul className="space-y-3 mb-8">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-sans font-semibold mb-3">
+                  What's included
+                </p>
+                <ul className="space-y-2.5 mb-8">
                   {pkg.features.map((feat) => (
                     <li
                       key={feat}
                       className="flex items-start gap-2.5 text-sm text-foreground/80 font-sans"
                     >
-                      <Check
-                        size={16}
-                        className="text-primary mt-0.5 shrink-0"
-                      />
+                      <Check size={16} className="text-primary mt-0.5 shrink-0" />
                       {feat}
                     </li>
                   ))}
@@ -160,7 +155,7 @@ const TrekkingTours = () => {
                   size="lg"
                 >
                   <Mountain size={16} className="mr-2" />
-                  Book This Package
+                  Book Now
                 </Button>
               </div>
             </motion.div>
