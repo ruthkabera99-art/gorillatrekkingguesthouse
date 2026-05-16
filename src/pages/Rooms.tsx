@@ -12,8 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { Users, ArrowLeft, Check, CalendarDays, Wifi, Wind, Tv, Coffee, Car, UtensilsCrossed, Bath, Eye, Lock, Sparkles } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-
-const fmt = (n: number) => `RWF ${n.toLocaleString()}`;
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const AMENITY_ICONS: Record<string, React.ReactNode> = {
   "WiFi": <Wifi size={12} />,
@@ -29,6 +28,7 @@ const AMENITY_ICONS: Record<string, React.ReactNode> = {
 };
 
 const Rooms = () => {
+  const { format: fmt } = useCurrency();
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookingRoom, setBookingRoom] = useState<any>(null);
