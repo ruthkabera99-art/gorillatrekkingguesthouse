@@ -21,6 +21,11 @@ const staticEntries: Entry[] = [
   { path: "/", changefreq: "weekly", priority: "1.0" },
   { path: "/rooms", changefreq: "daily", priority: "0.9" },
   { path: "/menu", changefreq: "weekly", priority: "0.7" },
+  { path: "/auth", changefreq: "monthly", priority: "0.3" },
+  { path: "/forgot-password", changefreq: "yearly", priority: "0.1" },
+  { path: "/reset-password", changefreq: "yearly", priority: "0.1" },
+  { path: "/dashboard", changefreq: "monthly", priority: "0.3" },
+  { path: "/kitchen", changefreq: "monthly", priority: "0.2" },
 ];
 
 async function fetchRoomEntries(): Promise<Entry[]> {

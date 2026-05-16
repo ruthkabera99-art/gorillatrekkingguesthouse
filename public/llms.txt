@@ -1,0 +1,16 @@
+# Gorilla Trekking Guest House
+
+> Boutique guest house in Musanze, Rwanda — minutes from Volcanoes National Park. Rooms, restaurant, bar, and curated gorilla trekking tours.
+
+Gorilla Trekking Guest House offers comfortable accommodation for travellers visiting Volcanoes National Park to track mountain gorillas and golden monkeys. We provide direct online booking in RWF/USD/EUR/GBP, a full-service restaurant and bar, and guided trekking packages (half-day, full-day, and 3-day adventures).
+
+## Pages
+
+- [Home](/): Overview of the guest house, rooms, dining, and trekking packages
+- [Rooms & Suites](/rooms): Browse available rooms with live pricing and direct booking
+- [Restaurant & Bar Menu](/menu): Order food and drinks; in-room dining for guests
+
+## Optional
+
+- [Sign In](/auth): Guest account access
+- [My Dashboard](/dashboard): Manage bookings and in-stay services

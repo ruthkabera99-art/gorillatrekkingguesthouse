@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,6 +97,15 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>My Dashboard — Gorilla Trekking Guest House</title>
+        <meta name="description" content="View your bookings, manage your stay, and request in-room services at Gorilla Trekking Guest House." />
+        <meta name="robots" content="noindex,follow" />
+        <link rel="canonical" href="https://gorillatrekkingguesthouse.lovable.app/dashboard" />
+        <meta property="og:title" content="Guest Dashboard — Gorilla Trekking Guest House" />
+        <meta property="og:description" content="Manage your stay and in-room services at Gorilla Trekking Guest House." />
+        <meta property="og:url" content="https://gorillatrekkingguesthouse.lovable.app/dashboard" />
+      </Helmet>
       <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
