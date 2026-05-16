@@ -76,7 +76,7 @@ const RoomShowcase = () => {
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.6, delay: i * 0.1 }}
               >
-                <div className="group relative overflow-hidden rounded-2xl bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-700 h-full">
+                <Link to="/rooms" aria-label={`View details for ${room.type}`} className="group relative block overflow-hidden rounded-2xl bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-700 h-full cursor-pointer">
                   <div className="relative h-56 sm:h-72 overflow-hidden">
                     <img
                       src={room.image}
