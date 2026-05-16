@@ -20,10 +20,10 @@ const Index = () => {
   return (
     <main className="min-h-screen">
       <Helmet>
-        <title>Gorilla Trekking Guest House — Hotel near Volcanoes NP, Musanze Rwanda | Book Direct</title>
+        <title>Gorilla Trekking Guest House — Musanze | Book Direct</title>
         <meta
           name="description"
-          content="Boutique guest house at the foot of Volcanoes National Park, Musanze. Comfortable rooms from RWF 45,000, restaurant, bar, and curated gorilla trekking tours. Book direct for the best price."
+          content="Boutique guest house near Volcanoes National Park, Musanze. Rooms from RWF 45,000, restaurant, bar & gorilla trekking tours. Book direct."
         />
         <meta name="keywords" content="gorilla trekking, Musanze hotel, Volcanoes National Park accommodation, Rwanda guest house, Kinigi lodge, Virunga lodging, Rwanda safari hotel" />
         <link rel="canonical" href={`${SITE_URL}/`} />

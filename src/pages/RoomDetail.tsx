@@ -99,6 +99,7 @@ const RoomDetail = () => {
         <meta name="description" content={`${room.name}: ${(room.description || "Boutique room near Volcanoes National Park.").slice(0, 150)} From ${fmt(Number(room.base_price))} per night.`} />
         <link rel="canonical" href={`https://gorillatrekkingguesthouse.lovable.app/rooms/${room.id}`} />
         <meta property="og:title" content={`${room.name} — Gorilla Trekking Guest House`} />
+        <meta property="og:description" content={`${room.name} for up to ${room.capacity} guests, from ${fmt(Number(room.base_price))} per night near Volcanoes National Park.`} />
         <meta property="og:type" content="product" />
         <meta property="og:image" content={images[0]} />
         <meta property="og:url" content={`https://gorillatrekkingguesthouse.lovable.app/rooms/${room.id}`} />

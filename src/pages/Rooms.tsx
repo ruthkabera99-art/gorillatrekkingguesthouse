@@ -122,10 +122,11 @@ const Rooms = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Rooms & Suites — Gorilla Trekking Guest House, Musanze Rwanda</title>
-        <meta name="description" content="Browse comfortable rooms and suites at Gorilla Trekking Guest House near Volcanoes National Park. Real prices in RWF, instant confirmation, free cancellation." />
+        <title>Rooms & Suites — Gorilla Trekking Guest House, Musanze</title>
+        <meta name="description" content="Browse comfortable rooms and suites near Volcanoes National Park. Real prices in RWF, instant confirmation, free cancellation." />
         <link rel="canonical" href="https://gorillatrekkingguesthouse.lovable.app/rooms" />
         <meta property="og:title" content="Rooms & Suites — Gorilla Trekking Guest House" />
+        <meta property="og:description" content="Compare standard, deluxe and suite rooms near Volcanoes National Park. Live availability and direct-booking rates." />
         <meta property="og:url" content="https://gorillatrekkingguesthouse.lovable.app/rooms" />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",

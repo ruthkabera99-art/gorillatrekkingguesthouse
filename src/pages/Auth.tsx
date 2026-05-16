@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,6 +74,15 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+      <Helmet>
+        <title>Sign In or Create Account — Gorilla Trekking Guest House</title>
+        <meta name="description" content="Sign in to manage your booking or create an account to book rooms and gorilla trekking tours at Gorilla Trekking Guest House." />
+        <meta name="robots" content="noindex,follow" />
+        <link rel="canonical" href="https://gorillatrekkingguesthouse.lovable.app/auth" />
+        <meta property="og:title" content="Sign In — Gorilla Trekking Guest House" />
+        <meta property="og:description" content="Access your guest account at Gorilla Trekking Guest House, Musanze." />
+        <meta property="og:url" content="https://gorillatrekkingguesthouse.lovable.app/auth" />
+      </Helmet>
       {/* Background */}
       <div
         className="absolute inset-0 bg-cover bg-center"
