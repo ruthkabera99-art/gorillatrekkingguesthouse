@@ -14,6 +14,7 @@ import {
   Search, ArrowLeft, CheckCircle, Clock, ChefHat, Truck, User, ClipboardList
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 type Product = {
   id: string; name: string; description: string | null; price: number;
@@ -28,7 +29,7 @@ const categoryLabels: Record<string, string> = {
   cocktail: "Cocktails", spirit: "Spirits", hot_beverage: "Hot Beverages",
 };
 
-const formatRWF = (amount: number) => `RWF ${amount.toLocaleString()}`;
+
 
 const statusConfig: Record<string, { icon: any; label: string; color: string; message: string }> = {
   pending: { icon: Clock, label: "Order Received", color: "text-yellow-600", message: "Your order has been received and is waiting to be processed." },
@@ -39,6 +40,7 @@ const statusConfig: Record<string, { icon: any; label: string; color: string; me
 };
 
 const Menu = () => {
+  const { format: formatRWF } = useCurrency();
   const [searchParams] = useSearchParams();
   const tableNumber = searchParams.get("table");
   const roomSource = searchParams.get("source") === "room";

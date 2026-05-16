@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowLeft, Users, Check, Wifi, Wind, Tv, Coffee, Car, UtensilsCrossed, Bath, Eye, Lock, Sparkles } from "lucide-react";
-
-const fmt = (n: number) => `RWF ${n.toLocaleString()}`;
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 const AMENITY_ICONS: Record<string, React.ReactNode> = {
   "WiFi": <Wifi size={14} />,
@@ -27,6 +26,7 @@ const AMENITY_ICONS: Record<string, React.ReactNode> = {
 };
 
 const RoomDetail = () => {
+  const { format: fmt } = useCurrency();
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
