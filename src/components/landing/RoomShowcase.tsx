@@ -48,7 +48,7 @@ const RoomShowcase = () => {
   const navigate = useNavigate();
 
   const handleCardKeyDown = (e: React.KeyboardEvent<HTMLAnchorElement>) => {
-    if (e.key === " " || e.key === "Spacebar") {
+    if (e.key === " " || e.key === "Spacebar" || e.key === "Space") {
       e.preventDefault();
       navigate("/rooms");
     }
