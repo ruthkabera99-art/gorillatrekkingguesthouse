@@ -45,6 +45,14 @@ const rooms = [
 
 const RoomShowcase = () => {
   const { format } = useCurrency();
+  const navigate = useNavigate();
+
+  const handleCardKeyDown = (e: React.KeyboardEvent<HTMLAnchorElement>) => {
+    if (e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      navigate("/rooms");
+    }
+  };
 
   return (
     <section id="rooms" className="py-20 sm:py-32 bg-background">
