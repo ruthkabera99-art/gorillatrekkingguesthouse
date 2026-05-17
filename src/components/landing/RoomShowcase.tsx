@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Users, Star, ArrowRight, Wifi, Coffee, Tv } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import PaymentBadges from "./PaymentBadges";
 
