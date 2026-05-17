@@ -84,7 +84,12 @@ const RoomShowcase = () => {
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.6, delay: i * 0.1 }}
               >
-                <Link to="/rooms" aria-label={`View details for ${room.type}`} className="group relative block overflow-hidden rounded-2xl bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-700 h-full cursor-pointer">
+                <Link
+                  to="/rooms"
+                  aria-label={`View details for ${room.type}`}
+                  className="group relative block overflow-hidden rounded-2xl bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-700 h-full cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+                  onKeyDown={handleCardKeyDown}
+                >
                   <div className="relative h-56 sm:h-72 overflow-hidden">
                     <img
                       src={room.image}
