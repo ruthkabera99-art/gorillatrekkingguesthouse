@@ -16,6 +16,31 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://gorillatrekkingguesthouse.lovable.app/auth</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://gorillatrekkingguesthouse.lovable.app/forgot-password</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.1</priority>
+  </url>
+  <url>
+    <loc>https://gorillatrekkingguesthouse.lovable.app/reset-password</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.1</priority>
+  </url>
+  <url>
+    <loc>https://gorillatrekkingguesthouse.lovable.app/dashboard</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://gorillatrekkingguesthouse.lovable.app/kitchen</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
     <loc>https://gorillatrekkingguesthouse.lovable.app/rooms/52495041-759d-4ab9-a97f-653873d3ea26</loc>
     <lastmod>2026-02-16</lastmod>
     <changefreq>weekly</changefreq>

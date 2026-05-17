@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Users, Star, ArrowRight, Wifi, Coffee, Tv } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import PaymentBadges from "./PaymentBadges";
 
@@ -45,6 +45,14 @@ const rooms = [
 
 const RoomShowcase = () => {
   const { format } = useCurrency();
+  const navigate = useNavigate();
+
+  const handleCardKeyDown = (e: React.KeyboardEvent<HTMLAnchorElement>) => {
+    if (e.key === " " || e.key === "Spacebar" || e.key === "Space") {
+      e.preventDefault();
+      navigate("/rooms");
+    }
+  };
 
   return (
     <section id="rooms" className="py-20 sm:py-32 bg-background">
@@ -76,7 +84,12 @@ const RoomShowcase = () => {
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.6, delay: i * 0.1 }}
               >
-                <Link to="/rooms" aria-label={`View details for ${room.type}`} className="group relative block overflow-hidden rounded-2xl bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-700 h-full cursor-pointer">
+                <Link
+                  to="/rooms"
+                  aria-label={`View details for ${room.type}`}
+                  className="group relative block overflow-hidden rounded-2xl bg-card border border-border shadow-lg hover:shadow-2xl transition-all duration-700 h-full cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+                  onKeyDown={handleCardKeyDown}
+                >
                   <div className="relative h-56 sm:h-72 overflow-hidden">
                     <img
                       src={room.image}
