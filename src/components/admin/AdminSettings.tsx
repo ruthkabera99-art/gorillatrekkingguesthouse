@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { Building2, Bell, Palette, Users, Phone, Mail, MapPin, Globe, Save, Loader2 } from "lucide-react";
+import { Building2, Bell, Palette, Users, Phone, Mail, MapPin, Globe, Save, Loader2, Search, Shield } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 type SiteSettings = Record<string, any>;
 
@@ -20,6 +21,7 @@ const AdminSettings = () => {
   const [profileForm, setProfileForm] = useState({ full_name: "", phone: "" });
   const [users, setUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [userSearch, setUserSearch] = useState("");
   const [activeSection, setActiveSection] = useState("hotel");
 
   // Site settings
@@ -48,20 +50,19 @@ const AdminSettings = () => {
       });
   }, [user]);
 
-  // Load users
-  useEffect(() => {
-    const loadUsers = async () => {
-      const { data: roles } = await supabase.from("user_roles").select("*");
-      const { data: profiles } = await supabase.from("profiles").select("*");
-      const merged = (profiles || []).map(p => ({
-        ...p,
-        roles: (roles || []).filter(r => r.user_id === p.user_id).map(r => r.role),
-      }));
-      setUsers(merged);
-      setLoadingUsers(false);
-    };
-    loadUsers();
-  }, []);
+  // Load users via edge function (includes emails)
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    const { data, error } = await supabase.functions.invoke("admin-list-users");
+    if (error) {
+      toast.error("Failed to load users: " + error.message);
+      setUsers([]);
+    } else {
+      setUsers(data?.users || []);
+    }
+    setLoadingUsers(false);
+  };
+  useEffect(() => { loadUsers(); }, []);
 
   // Load site settings
   useEffect(() => {
@@ -89,11 +90,14 @@ const AdminSettings = () => {
   };
 
   const changeUserRole = async (userId: string, currentRole: string, newRole: string) => {
-    await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", currentRole as any);
+    if (currentRole === newRole) return;
+    if (currentRole) {
+      await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", currentRole as any);
+    }
     const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: newRole as any });
     if (error) toast.error(error.message);
     else {
-      toast.success("Role updated");
+      toast.success(`Role updated to ${newRole}`);
       setUsers(prev => prev.map(u => u.user_id === userId ? { ...u, roles: [newRole] } : u));
     }
   };
@@ -355,34 +359,84 @@ const AdminSettings = () => {
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="font-serif flex items-center gap-2"><Users size={18} /> User Management</CardTitle>
-            <CardDescription className="font-sans">Manage user roles and permissions</CardDescription>
+            <CardDescription className="font-sans">
+              Assign roles to grant or revoke admin access. Changes take effect on the user's next page load.
+            </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, email, or phone…"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  className="pl-9 font-sans"
+                />
+              </div>
+              <Button variant="outline" size="sm" onClick={loadUsers} disabled={loadingUsers} className="font-sans gap-2">
+                {loadingUsers ? <Loader2 size={14} className="animate-spin" /> : "Refresh"}
+              </Button>
+            </div>
+
             {loadingUsers ? (
-              <div className="flex justify-center py-4"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
+              <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
             ) : users.length === 0 ? (
-              <p className="text-sm text-muted-foreground font-sans">No users found.</p>
+              <p className="text-sm text-muted-foreground font-sans py-4 text-center">No users found.</p>
             ) : (
-              <div className="space-y-3">
-                {users.map(u => (
-                  <div key={u.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
-                    <div>
-                      <p className="font-sans font-medium text-foreground text-sm">{u.full_name || "—"}</p>
-                      <p className="text-xs text-muted-foreground font-sans">{u.phone || "No phone"}</p>
-                      <p className="text-[10px] text-muted-foreground/60 font-sans">{u.user_id.slice(0, 12)}...</p>
-                    </div>
-                    <Select value={u.roles[0] || "user"} onValueChange={v => changeUserRole(u.user_id, u.roles[0] || "user", v)}>
-                      <SelectTrigger className="w-28 font-sans text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">User</SelectItem>
-                        <SelectItem value="moderator">Moderator</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
+              <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
+                {users
+                  .filter((u) => {
+                    if (!userSearch.trim()) return true;
+                    const q = userSearch.toLowerCase();
+                    return (
+                      (u.email || "").toLowerCase().includes(q) ||
+                      (u.full_name || "").toLowerCase().includes(q) ||
+                      (u.phone || "").toLowerCase().includes(q)
+                    );
+                  })
+                  .map((u) => {
+                    const currentRole = u.roles?.[0] || "user";
+                    const isCurrentUser = u.user_id === user?.id;
+                    return (
+                      <div key={u.user_id} className="flex items-center justify-between gap-3 p-3 bg-muted/40 rounded-lg border border-border">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-sans font-medium text-foreground text-sm truncate">
+                              {u.full_name || u.email || "Unnamed user"}
+                            </p>
+                            {isCurrentUser && (
+                              <Badge variant="outline" className="text-[10px] font-sans">You</Badge>
+                            )}
+                            {currentRole === "admin" && (
+                              <Badge className="text-[10px] font-sans gap-1 bg-primary/15 text-primary border-primary/30 hover:bg-primary/20">
+                                <Shield size={10} /> Admin
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground font-sans truncate">{u.email || "No email"}</p>
+                          {u.phone && <p className="text-xs text-muted-foreground/70 font-sans">{u.phone}</p>}
+                        </div>
+                        <Select
+                          value={currentRole}
+                          onValueChange={(v) => changeUserRole(u.user_id, currentRole, v)}
+                          disabled={isCurrentUser}
+                        >
+                          <SelectTrigger className="w-32 font-sans text-xs flex-shrink-0"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="moderator">Moderator</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })}
               </div>
             )}
+            <p className="text-xs text-muted-foreground font-sans pt-2 border-t border-border">
+              💡 You can't change your own role here (to avoid locking yourself out).
+            </p>
           </CardContent>
         </Card>
       )}
