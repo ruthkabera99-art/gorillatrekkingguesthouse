@@ -1,12 +1,13 @@
 import { useState } from "react";
-
-const WHATSAPP_NUMBER = "250788000000"; // placeholder
-const HREF = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-  "Hello! I'd like to inquire about a stay at Gorilla Trekking Guest House."
-)}`;
+import { useHotelInfo } from "@/hooks/useHotelInfo";
 
 const WhatsAppButton = () => {
   const [hover, setHover] = useState(false);
+  const { whatsapp, name } = useHotelInfo();
+  const number = (whatsapp || "250788000000").replace(/[^\d]/g, "");
+  const HREF = `https://wa.me/${number}?text=${encodeURIComponent(
+    `Hello! I'd like to inquire about a stay at ${name || "Gorilla Trekking Guest House"}.`
+  )}`;
   return (
     <a
       href={HREF}

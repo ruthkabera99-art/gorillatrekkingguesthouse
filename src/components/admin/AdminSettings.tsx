@@ -24,7 +24,7 @@ const AdminSettings = () => {
 
   // Site settings
   const [hotelInfo, setHotelInfo] = useState<SiteSettings>({
-    name: "", phone: "", email: "", address: "", currency: "RWF", description: ""
+    name: "", phone: "", whatsapp: "", email: "", address: "", currency: "RWF", description: ""
   });
   const [notifications, setNotifications] = useState<SiteSettings>({
     sms_on_booking_created: true,
@@ -102,8 +102,7 @@ const AdminSettings = () => {
     setSavingSettings(true);
     const { error } = await supabase
       .from("site_settings")
-      .update({ value, updated_at: new Date().toISOString() } as any)
-      .eq("key", key);
+      .upsert({ key, value, updated_at: new Date().toISOString() } as any, { onConflict: "key" });
     setSavingSettings(false);
     if (error) toast.error(error.message);
     else toast.success(`${key.replace("_", " ")} settings saved`);
@@ -151,6 +150,14 @@ const AdminSettings = () => {
               <div className="space-y-1.5">
                 <Label className="font-sans text-xs flex items-center gap-1"><Phone size={12} /> Phone</Label>
                 <Input value={hotelInfo.phone || ""} onChange={e => setHotelInfo({ ...hotelInfo, phone: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="font-sans text-xs flex items-center gap-1"><Phone size={12} /> WhatsApp Number</Label>
+                <Input
+                  placeholder="250788000000 (digits only, with country code)"
+                  value={hotelInfo.whatsapp || ""}
+                  onChange={e => setHotelInfo({ ...hotelInfo, whatsapp: e.target.value })}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="font-sans text-xs flex items-center gap-1"><Mail size={12} /> Email</Label>
