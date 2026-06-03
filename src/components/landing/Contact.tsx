@@ -3,15 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
-
-const contactInfo = [
-  { icon: MapPin, label: "Location", text: "Musanze, Rwanda — Near Volcanoes National Park" },
-  { icon: Phone, label: "Phone", text: "+250 788 000 000" },
-  { icon: Mail, label: "Email", text: "info@gorillatrekkingguesthouse.com" },
-  { icon: Clock, label: "Front Desk", text: "24/7 Service Available" },
-];
+import { useHotelInfo } from "@/hooks/useHotelInfo";
 
 const Contact = () => {
+  const hotel = useHotelInfo();
+  const contactInfo = [
+    { icon: MapPin, label: "Location", text: hotel.address || "Musanze, Rwanda" },
+    { icon: Phone, label: "Phone", text: hotel.phone || "+250 788 000 000" },
+    { icon: Mail, label: "Email", text: hotel.email || "info@gorillatrekkingguesthouse.com" },
+    { icon: Clock, label: "Front Desk", text: "24/7 Service Available" },
+  ];
   return (
     <section id="contact" className="py-20 sm:py-32 bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6">
