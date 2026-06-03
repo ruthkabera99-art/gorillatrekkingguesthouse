@@ -102,8 +102,7 @@ const AdminSettings = () => {
     setSavingSettings(true);
     const { error } = await supabase
       .from("site_settings")
-      .update({ value, updated_at: new Date().toISOString() } as any)
-      .eq("key", key);
+      .upsert({ key, value, updated_at: new Date().toISOString() } as any, { onConflict: "key" });
     setSavingSettings(false);
     if (error) toast.error(error.message);
     else toast.success(`${key.replace("_", " ")} settings saved`);
