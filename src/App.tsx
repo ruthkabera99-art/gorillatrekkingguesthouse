@@ -49,6 +49,8 @@ const App = () => (
             </Routes>
           </Suspense>
           <WhatsAppButton />
+          <ChatWidget />
+
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
