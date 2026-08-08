@@ -32,6 +32,7 @@ import AdminSettings from "@/components/admin/AdminSettings";
 import AdminKitchen from "@/components/admin/AdminKitchen";
 import AdminBar from "@/components/admin/AdminBar";
 import AdminBookings from "@/components/admin/AdminBookings";
+import AdminSecurity from "@/components/admin/AdminSecurity";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
