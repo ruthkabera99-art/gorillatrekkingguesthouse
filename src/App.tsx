@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { lazy, Suspense } from "react";
 import AnnouncementBanner from "@/components/landing/AnnouncementBanner";
 import WhatsAppButton from "@/components/landing/WhatsAppButton";
+import ChatWidget from "@/components/landing/ChatWidget";
 
 const Index = lazy(() => import("./pages/Index"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -48,6 +49,8 @@ const App = () => (
             </Routes>
           </Suspense>
           <WhatsAppButton />
+          <ChatWidget />
+
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
