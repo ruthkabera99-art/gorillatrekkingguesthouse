@@ -17,7 +17,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import {
   LayoutDashboard, ShoppingCart, Receipt, BedDouble, UtensilsCrossed,
-  Settings, Users, Tag, ChefHat, Wine, LogOut, BarChart3, CalendarDays
+  Settings, Users, Tag, ChefHat, Wine, LogOut, BarChart3, CalendarDays, ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
