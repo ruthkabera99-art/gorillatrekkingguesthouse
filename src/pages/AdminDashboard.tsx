@@ -45,7 +45,9 @@ const tabs = [
   { key: "products", label: "Menu Products", icon: UtensilsCrossed },
   { key: "tables", label: "Tables", icon: BarChart3 },
   { key: "promotions", label: "Promotions", icon: Tag },
+  { key: "security", label: "Security", icon: ShieldCheck },
   { key: "settings", label: "Settings", icon: Settings },
+
 ];
 
 const AdminDashboard = () => {
