@@ -17,7 +17,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import {
   LayoutDashboard, ShoppingCart, Receipt, BedDouble, UtensilsCrossed,
-  Settings, Users, Tag, ChefHat, Wine, LogOut, BarChart3, CalendarDays
+  Settings, Users, Tag, ChefHat, Wine, LogOut, BarChart3, CalendarDays, ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ import AdminSettings from "@/components/admin/AdminSettings";
 import AdminKitchen from "@/components/admin/AdminKitchen";
 import AdminBar from "@/components/admin/AdminBar";
 import AdminBookings from "@/components/admin/AdminBookings";
+import AdminSecurity from "@/components/admin/AdminSecurity";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
@@ -44,7 +45,9 @@ const tabs = [
   { key: "products", label: "Menu Products", icon: UtensilsCrossed },
   { key: "tables", label: "Tables", icon: BarChart3 },
   { key: "promotions", label: "Promotions", icon: Tag },
+  { key: "security", label: "Security", icon: ShieldCheck },
   { key: "settings", label: "Settings", icon: Settings },
+
 ];
 
 const AdminDashboard = () => {
@@ -121,7 +124,9 @@ const AdminDashboard = () => {
       case "products": return <AdminProducts />;
       case "tables": return <AdminTables />;
       case "promotions": return <AdminPromotions />;
+      case "security": return <AdminSecurity />;
       case "settings": return <AdminSettings />;
+
       default: return <AdminOverview />;
     }
   };
