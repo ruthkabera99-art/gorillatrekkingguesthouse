@@ -124,7 +124,9 @@ const AdminDashboard = () => {
       case "products": return <AdminProducts />;
       case "tables": return <AdminTables />;
       case "promotions": return <AdminPromotions />;
+      case "security": return <AdminSecurity />;
       case "settings": return <AdminSettings />;
+
       default: return <AdminOverview />;
     }
   };
