@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { MessageCircle, X, Minus } from "lucide-react";
@@ -45,7 +45,7 @@ const ChatWidget = () => {
   const [sessionId] = useState(getSessionId);
   const [initial, setInitial] = useState<UIMessage[] | null>(null);
   const [input, setInput] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   // Load the saved conversation once, before mounting the chat.
   useEffect(() => {
@@ -130,7 +130,7 @@ const ChatWidget = () => {
               initialMessages={initial}
               input={input}
               setInput={setInput}
-              textareaRef={textareaRef}
+              formRef={formRef}
               hotelName={name}
             />
           )}
@@ -145,14 +145,14 @@ function ChatBody({
   initialMessages,
   input,
   setInput,
-  textareaRef,
+  formRef,
   hotelName,
 }: {
   sessionId: string;
   initialMessages: UIMessage[];
   input: string;
   setInput: (v: string) => void;
-  textareaRef: React.RefObject<HTMLTextAreaElement>;
+  formRef: React.RefObject<HTMLDivElement>;
   hotelName?: string;
 }) {
   const { messages, sendMessage, status, error } = useChat({
@@ -175,20 +175,20 @@ function ChatBody({
 
   const busy = status === "submitted" || status === "streaming";
 
-  useEffect(() => {
-    textareaRef.current?.focus();
-  }, [textareaRef]);
+  const focusInput = useCallback(() => {
+    formRef.current?.querySelector("textarea")?.focus();
+  }, [formRef]);
 
   useEffect(() => {
-    if (status === "ready") textareaRef.current?.focus();
-  }, [status, textareaRef]);
+    if (status === "ready" || status === undefined) focusInput();
+  }, [status, focusInput]);
 
   const send = (text: string) => {
     const value = text.trim();
     if (!value || busy) return;
     sendMessage({ text: value });
     setInput("");
-    requestAnimationFrame(() => textareaRef.current?.focus());
+    requestAnimationFrame(focusInput);
   };
 
   return (
@@ -244,7 +244,7 @@ function ChatBody({
         <ConversationScrollButton />
       </Conversation>
 
-      <div className="p-3 border-t border-border/60 shrink-0">
+      <div ref={formRef} className="p-3 border-t border-border/60 shrink-0">
         <PromptInput
           onSubmit={(_, e) => {
             e.preventDefault();
@@ -252,7 +252,6 @@ function ChatBody({
           }}
         >
           <PromptInputTextarea
-            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about rooms, prices, trekking…"
