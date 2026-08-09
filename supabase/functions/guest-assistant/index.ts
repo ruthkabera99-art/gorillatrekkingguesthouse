@@ -52,6 +52,15 @@ Deno.serve(async (req) => {
 
     const db = admin();
 
+    const textOf = (m: UIMessage) =>
+      (m.parts ?? [])
+        .filter((p: any) => p.type === "text")
+        .map((p: any) => p.text)
+        .join("")
+        .trim();
+
+
+
     // Identify the guest (optional — anonymous visitors are still welcome)
     let userId: string | null = null;
     if (accessToken) {
