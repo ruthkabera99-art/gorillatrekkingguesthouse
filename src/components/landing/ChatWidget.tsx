@@ -44,14 +44,21 @@ const ChatWidget = () => {
   const [open, setOpen] = useState(false);
   const [sessionId] = useState(getSessionId);
   const [initial, setInitial] = useState<UIMessage[] | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
 
-  // Load the saved conversation once, before mounting the chat.
+  // Load the saved conversation (and the guest's session, for personalised memory) once.
   useEffect(() => {
     if (!open || initial || !sessionId) return;
     let active = true;
     (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (active) setAccessToken(data.session?.access_token ?? null);
+      } catch {
+        /* anonymous visitor */
+      }
       try {
         const res = await fetch(ENDPOINT, {
           method: "POST",
