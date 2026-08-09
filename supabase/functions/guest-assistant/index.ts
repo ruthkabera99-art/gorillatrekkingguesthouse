@@ -228,6 +228,24 @@ To book, direct guests to the Rooms page on the site or to WhatsApp. You cannot 
             return { items: data ?? [], currency: "RWF" };
           },
         }),
+        get_my_stays: tool({
+          description:
+            "Get this signed-in guest's own booking history (dates, room, guests, status) to reuse their previous dates or room preference.",
+          inputSchema: z.object({}),
+          execute: async () => {
+            if (!userId) return { signed_in: false, stays: [] };
+            const { data, error } = await db
+              .from("bookings")
+              .select(
+                "check_in, check_out, guests_adults, guests_children, status, total_price, invoice_number, rooms(name, type, base_price, capacity)",
+              )
+              .eq("user_id", userId)
+              .order("check_in", { ascending: false })
+              .limit(10);
+            if (error) return { error: error.message };
+            return { signed_in: true, currency: "RWF", stays: data ?? [] };
+          },
+        }),
       },
     });
 
@@ -238,8 +256,9 @@ To book, direct guests to the Rooms page on the site or to WhatsApp. You cannot 
         if (!content) return;
         const { error } = await db
           .from("chat_messages")
-          .insert({ session_id: sessionId, role: "assistant", content });
+          .insert({ session_id: sessionId, user_id: userId, role: "assistant", content });
         if (error) console.error("save assistant message failed", error.message);
+      },
       },
     });
   } catch (e) {
