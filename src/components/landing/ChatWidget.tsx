@@ -136,6 +136,7 @@ const ChatWidget = () => {
             <ChatBody
               sessionId={sessionId}
               initialMessages={initial}
+              accessToken={accessToken}
               input={input}
               setInput={setInput}
               formRef={formRef}
