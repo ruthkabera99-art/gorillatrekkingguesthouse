@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const messages: UIMessage[] = body?.messages ?? [];
     const sessionId: string = String(body?.sessionId ?? "").slice(0, 64);
+    const accessToken: string | null = body?.accessToken ? String(body.accessToken) : null;
 
     // GET-style history load
     if (body?.action === "history") {
@@ -58,6 +59,58 @@ Deno.serve(async (req) => {
         .join("")
         .trim();
 
+
+
+    // Identify the guest (optional — anonymous visitors are still welcome)
+    let userId: string | null = null;
+    if (accessToken) {
+      const { data: authData } = await db.auth.getUser(accessToken);
+      userId = authData?.user?.id ?? null;
+    }
+
+    // Build a short memory of this guest: who they are, their last stay and room preferences
+    let guestMemory = "This visitor is not signed in, so you have no stay history for them.";
+    if (userId) {
+      const [{ data: profile }, { data: stays }] = await Promise.all([
+        db.from("profiles").select("full_name, phone, loyalty_points").eq("user_id", userId).maybeSingle(),
+        db
+          .from("bookings")
+          .select("check_in, check_out, guests_adults, guests_children, status, total_price, room_id, rooms(name, type, base_price)")
+          .eq("user_id", userId)
+          .order("check_in", { ascending: false })
+          .limit(5),
+      ]);
+
+      const history = stays ?? [];
+      const counts = new Map<string, number>();
+      for (const s of history as any[]) {
+        const t = s.rooms?.type;
+        if (t) counts.set(t, (counts.get(t) ?? 0) + 1);
+      }
+      const favouriteType = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+      const lastStay = (history as any[])[0] ?? null;
+      const typicalGuests = lastStay
+        ? (lastStay.guests_adults ?? 1) + (lastStay.guests_children ?? 0)
+        : null;
+
+      guestMemory = [
+        `Signed-in guest: ${profile?.full_name || "name unknown"}${profile?.phone ? ` (${profile.phone})` : ""}.`,
+        `Loyalty points: ${profile?.loyalty_points ?? 0}.`,
+        lastStay
+          ? `Last booking: ${lastStay.rooms?.name ?? "a room"} (${lastStay.rooms?.type ?? "unknown type"}) from ${lastStay.check_in} to ${lastStay.check_out}, status ${lastStay.status}, for ${typicalGuests} guest(s).`
+          : "No previous bookings on record.",
+        favouriteType ? `Preferred room type based on past stays: ${favouriteType}.` : "",
+        history.length > 1
+          ? `Earlier stays: ${(history as any[])
+              .slice(1)
+              .map((s) => `${s.rooms?.name ?? "room"} ${s.check_in}→${s.check_out}`)
+              .join("; ")}.`
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
+
     // Persist the latest user message
     const last = messages[messages.length - 1];
     if (last?.role === "user") {
@@ -65,7 +118,7 @@ Deno.serve(async (req) => {
       if (content) {
         const { error } = await db
           .from("chat_messages")
-          .insert({ session_id: sessionId, role: "user", content });
+          .insert({ session_id: sessionId, user_id: userId, role: "user", content });
         if (error) console.error("save user message failed", error.message);
       }
     }
@@ -95,6 +148,12 @@ Known facts:
 - Current promotion: 20% off all rooms for stays of 7+ nights.
 - Contact details: ${JSON.stringify(hotel)}
 - Prices are quoted in RWF.
+- Today's date is ${new Date().toISOString().slice(0, 10)}.
+
+Guest memory (what you already know about this visitor):
+${guestMemory}
+
+Use the guest memory to answer faster: greet returning guests by first name, assume their preferred room type and usual party size unless they say otherwise, and when they ask about "the same room" or "like last time" use the remembered room and dates instead of asking again. Always confirm your assumption in one short clause (e.g. "in the Deluxe again, for 2 guests?") and never state a remembered date or room as a new confirmed booking. Call get_my_stays if you need the full booking details.
 
 To book, direct guests to the Rooms page on the site or to WhatsApp. You cannot create bookings or take payments yourself.`,
       messages: await convertToModelMessages(messages),
@@ -169,6 +228,24 @@ To book, direct guests to the Rooms page on the site or to WhatsApp. You cannot 
             return { items: data ?? [], currency: "RWF" };
           },
         }),
+        get_my_stays: tool({
+          description:
+            "Get this signed-in guest's own booking history (dates, room, guests, status) to reuse their previous dates or room preference.",
+          inputSchema: z.object({}),
+          execute: async () => {
+            if (!userId) return { signed_in: false, stays: [] };
+            const { data, error } = await db
+              .from("bookings")
+              .select(
+                "check_in, check_out, guests_adults, guests_children, status, total_price, invoice_number, rooms(name, type, base_price, capacity)",
+              )
+              .eq("user_id", userId)
+              .order("check_in", { ascending: false })
+              .limit(10);
+            if (error) return { error: error.message };
+            return { signed_in: true, currency: "RWF", stays: data ?? [] };
+          },
+        }),
       },
     });
 
@@ -179,8 +256,9 @@ To book, direct guests to the Rooms page on the site or to WhatsApp. You cannot 
         if (!content) return;
         const { error } = await db
           .from("chat_messages")
-          .insert({ session_id: sessionId, role: "assistant", content });
+          .insert({ session_id: sessionId, user_id: userId, role: "assistant", content });
         if (error) console.error("save assistant message failed", error.message);
+      },
       },
     });
   } catch (e) {

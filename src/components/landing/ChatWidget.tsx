@@ -17,6 +17,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { useHotelInfo } from "@/hooks/useHotelInfo";
+import { supabase } from "@/integrations/supabase/client";
 import assistantAvatar from "@/assets/assistant-avatar.png";
 
 const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/guest-assistant`;
@@ -44,14 +45,21 @@ const ChatWidget = () => {
   const [open, setOpen] = useState(false);
   const [sessionId] = useState(getSessionId);
   const [initial, setInitial] = useState<UIMessage[] | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
 
-  // Load the saved conversation once, before mounting the chat.
+  // Load the saved conversation (and the guest's session, for personalised memory) once.
   useEffect(() => {
     if (!open || initial || !sessionId) return;
     let active = true;
     (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (active) setAccessToken(data.session?.access_token ?? null);
+      } catch {
+        /* anonymous visitor */
+      }
       try {
         const res = await fetch(ENDPOINT, {
           method: "POST",
@@ -128,6 +136,7 @@ const ChatWidget = () => {
             <ChatBody
               sessionId={sessionId}
               initialMessages={initial}
+              accessToken={accessToken}
               input={input}
               setInput={setInput}
               formRef={formRef}
@@ -143,6 +152,7 @@ const ChatWidget = () => {
 function ChatBody({
   sessionId,
   initialMessages,
+  accessToken,
   input,
   setInput,
   formRef,
@@ -150,6 +160,7 @@ function ChatBody({
 }: {
   sessionId: string;
   initialMessages: UIMessage[];
+  accessToken: string | null;
   input: string;
   setInput: (v: string) => void;
   formRef: React.RefObject<HTMLDivElement>;
@@ -163,7 +174,7 @@ function ChatBody({
       headers: {
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: { sessionId },
+      body: { sessionId, accessToken },
     }),
     onError: (err) => {
       const msg = err?.message ?? "";
