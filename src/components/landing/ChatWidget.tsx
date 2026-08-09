@@ -17,6 +17,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { useHotelInfo } from "@/hooks/useHotelInfo";
+import { supabase } from "@/integrations/supabase/client";
 import assistantAvatar from "@/assets/assistant-avatar.png";
 
 const ENDPOINT = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/guest-assistant`;
