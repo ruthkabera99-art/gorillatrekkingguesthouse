@@ -41,7 +41,7 @@ const ResetPassword = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label className="font-sans text-sm">New Password</Label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="mt-1.5 font-sans" />
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="mt-1.5 font-sans" />
             </div>
             <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans py-5">
               {loading ? "Updating..." : "Update Password"}
