@@ -148,6 +148,12 @@ Known facts:
 - Current promotion: 20% off all rooms for stays of 7+ nights.
 - Contact details: ${JSON.stringify(hotel)}
 - Prices are quoted in RWF.
+- Today's date is ${new Date().toISOString().slice(0, 10)}.
+
+Guest memory (what you already know about this visitor):
+${guestMemory}
+
+Use the guest memory to answer faster: greet returning guests by first name, assume their preferred room type and usual party size unless they say otherwise, and when they ask about "the same room" or "like last time" use the remembered room and dates instead of asking again. Always confirm your assumption in one short clause (e.g. "in the Deluxe again, for 2 guests?") and never state a remembered date or room as a new confirmed booking. Call get_my_stays if you need the full booking details.
 
 To book, direct guests to the Rooms page on the site or to WhatsApp. You cannot create bookings or take payments yourself.`,
       messages: await convertToModelMessages(messages),
