@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const messages: UIMessage[] = body?.messages ?? [];
     const sessionId: string = String(body?.sessionId ?? "").slice(0, 64);
+    const accessToken: string | null = body?.accessToken ? String(body.accessToken) : null;
 
     // GET-style history load
     if (body?.action === "history") {
@@ -51,12 +52,55 @@ Deno.serve(async (req) => {
 
     const db = admin();
 
-    const textOf = (m: UIMessage) =>
-      (m.parts ?? [])
-        .filter((p: any) => p.type === "text")
-        .map((p: any) => p.text)
-        .join("")
-        .trim();
+    // Identify the guest (optional — anonymous visitors are still welcome)
+    let userId: string | null = null;
+    if (accessToken) {
+      const { data: authData } = await db.auth.getUser(accessToken);
+      userId = authData?.user?.id ?? null;
+    }
+
+    // Build a short memory of this guest: who they are, their last stay and room preferences
+    let guestMemory = "This visitor is not signed in, so you have no stay history for them.";
+    if (userId) {
+      const [{ data: profile }, { data: stays }] = await Promise.all([
+        db.from("profiles").select("full_name, phone, loyalty_points").eq("user_id", userId).maybeSingle(),
+        db
+          .from("bookings")
+          .select("check_in, check_out, guests_adults, guests_children, status, total_price, room_id, rooms(name, type, base_price)")
+          .eq("user_id", userId)
+          .order("check_in", { ascending: false })
+          .limit(5),
+      ]);
+
+      const history = stays ?? [];
+      const counts = new Map<string, number>();
+      for (const s of history as any[]) {
+        const t = s.rooms?.type;
+        if (t) counts.set(t, (counts.get(t) ?? 0) + 1);
+      }
+      const favouriteType = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+      const lastStay = (history as any[])[0] ?? null;
+      const typicalGuests = lastStay
+        ? (lastStay.guests_adults ?? 1) + (lastStay.guests_children ?? 0)
+        : null;
+
+      guestMemory = [
+        `Signed-in guest: ${profile?.full_name || "name unknown"}${profile?.phone ? ` (${profile.phone})` : ""}.`,
+        `Loyalty points: ${profile?.loyalty_points ?? 0}.`,
+        lastStay
+          ? `Last booking: ${lastStay.rooms?.name ?? "a room"} (${lastStay.rooms?.type ?? "unknown type"}) from ${lastStay.check_in} to ${lastStay.check_out}, status ${lastStay.status}, for ${typicalGuests} guest(s).`
+          : "No previous bookings on record.",
+        favouriteType ? `Preferred room type based on past stays: ${favouriteType}.` : "",
+        history.length > 1
+          ? `Earlier stays: ${(history as any[])
+              .slice(1)
+              .map((s) => `${s.rooms?.name ?? "room"} ${s.check_in}→${s.check_out}`)
+              .join("; ")}.`
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+    }
 
     // Persist the latest user message
     const last = messages[messages.length - 1];
@@ -65,7 +109,7 @@ Deno.serve(async (req) => {
       if (content) {
         const { error } = await db
           .from("chat_messages")
-          .insert({ session_id: sessionId, role: "user", content });
+          .insert({ session_id: sessionId, user_id: userId, role: "user", content });
         if (error) console.error("save user message failed", error.message);
       }
     }
