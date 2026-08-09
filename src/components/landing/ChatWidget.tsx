@@ -152,6 +152,7 @@ const ChatWidget = () => {
 function ChatBody({
   sessionId,
   initialMessages,
+  accessToken,
   input,
   setInput,
   formRef,
@@ -159,6 +160,7 @@ function ChatBody({
 }: {
   sessionId: string;
   initialMessages: UIMessage[];
+  accessToken: string | null;
   input: string;
   setInput: (v: string) => void;
   formRef: React.RefObject<HTMLDivElement>;
@@ -172,7 +174,7 @@ function ChatBody({
       headers: {
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: { sessionId },
+      body: { sessionId, accessToken },
     }),
     onError: (err) => {
       const msg = err?.message ?? "";
