@@ -173,17 +173,7 @@ const AdminBookings = () => {
         (status === "cancelled" && settings.sms_on_booking_cancelled);
 
       if (shouldSendSMS) {
-        let phone = booking.guest_phone;
-        let name = booking.guest_name || "Guest";
-        if (booking.user_id) {
-          const { data: guestProf } = await supabase.from("profiles")
-            .select("full_name, phone").eq("user_id", booking.user_id).single();
-          phone = guestProf?.phone || phone;
-          name = guestProf?.full_name || name;
-        }
-        if (phone) {
-          await sendBookingSMS(phone, name, booking.rooms?.name || "Room", status, format(new Date(booking.check_in), "MMM dd, yyyy"), format(new Date(booking.check_out), "MMM dd, yyyy"));
-        }
+        await sendBookingSMS(booking.id, status);
       }
     }
 
@@ -431,7 +421,7 @@ const AdminBookings = () => {
                         <span className="font-sans text-xs text-foreground">Quick SMS to {guestProfile.phone}</span>
                       </div>
                       <Button size="sm" variant="outline" className="text-xs font-sans h-7" onClick={async () => {
-                        await sendBookingSMS(guestProfile.phone!, guestProfile.full_name || "Guest", selectedBooking.rooms?.name || "Room", selectedBooking.status, format(new Date(selectedBooking.check_in), "MMM dd, yyyy"), format(new Date(selectedBooking.check_out), "MMM dd, yyyy"));
+                        await sendBookingSMS(selectedBooking.id, selectedBooking.status);
                       }}>
                         <Bell size={12} className="mr-1" /> Send SMS
                       </Button>
