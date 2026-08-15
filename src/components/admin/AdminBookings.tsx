@@ -47,19 +47,14 @@ const statusColors: Record<string, string> = {
   completed: "bg-green-500/10 text-green-500 border-green-500/20",
 };
 
-const sendBookingSMS = async (guestPhone: string, guestName: string, roomName: string, status: string, checkIn: string, checkOut: string) => {
-  const messages: Record<string, string> = {
-    pending: `Hello ${guestName}, your booking at Gorilla Trekking Guest House for ${roomName} (${checkIn} to ${checkOut}) has been received. We'll confirm shortly!`,
-    confirmed: `Great news ${guestName}! Your booking for ${roomName} at Gorilla Trekking Guest House (${checkIn} to ${checkOut}) is CONFIRMED. We look forward to welcoming you!`,
-    checked_in: `Welcome ${guestName}! You've been checked in to ${roomName} at Gorilla Trekking Guest House. Enjoy your stay!`,
-    cancelled: `Dear ${guestName}, your booking for ${roomName} (${checkIn} to ${checkOut}) at Gorilla Trekking Guest House has been cancelled. Contact us for questions.`,
-    completed: `Thank you ${guestName} for staying at Gorilla Trekking Guest House! We hope you enjoyed your time in ${roomName}. We'd love to see you again!`,
-  };
-  const message = messages[status];
-  if (!message) return;
+// Message text and recipient are resolved server-side from the booking.
+const VALID_SMS_TEMPLATES = ["pending", "confirmed", "checked_in", "cancelled", "completed"];
+
+const sendBookingSMS = async (bookingId: string, template: string) => {
+  if (!VALID_SMS_TEMPLATES.includes(template)) return;
   try {
     const { data, error } = await supabase.functions.invoke("send-booking-sms", {
-      body: { to: guestPhone, message },
+      body: { bookingId, template },
     });
     if (error) { console.error("SMS invoke error:", error); toast.error("Failed to send SMS notification"); }
     else if (data?.success) toast.success("SMS notification sent to guest");
