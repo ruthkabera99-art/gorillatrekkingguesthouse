@@ -175,11 +175,13 @@ const Menu = () => {
     const sourceType = activeBooking && chargeToRoom ? "room" : "table";
     const sourceId = activeBooking && chargeToRoom ? activeBooking.room_id : (guestTable || "online");
 
+    // `total` is recalculated server-side from real menu prices; item prices are
+    // validated against the products table by the database.
     const { data: order, error } = await supabase.from("orders").insert({
       source_type: sourceType,
       source_id: sourceId,
       user_id: user?.id || null,
-      total: cartTotal,
+      total: 0,
       payment_status: chargeToRoom ? "charged_to_room" : "unpaid",
       notes: orderNotes || null,
       guest_name: guest?.name || null,
@@ -206,7 +208,9 @@ const Menu = () => {
       toast.error("Order created but items failed. Contact staff.");
     } else {
       toast.success("Order placed successfully!");
-      setPlacedOrder(order);
+      const { data: refreshed } = await supabase
+        .from("orders").select("*").eq("id", (order as any).id).maybeSingle();
+      setPlacedOrder(refreshed || order);
       setOrderItems(items.map((it, idx) => ({
         ...it, id: `temp-${idx}`,
         product: { name: cart[idx].product.name, department: cart[idx].product.department },
