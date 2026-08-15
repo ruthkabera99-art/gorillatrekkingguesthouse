@@ -47,19 +47,14 @@ const statusColors: Record<string, string> = {
   completed: "bg-green-500/10 text-green-500 border-green-500/20",
 };
 
-const sendBookingSMS = async (guestPhone: string, guestName: string, roomName: string, status: string, checkIn: string, checkOut: string) => {
-  const messages: Record<string, string> = {
-    pending: `Hello ${guestName}, your booking at Gorilla Trekking Guest House for ${roomName} (${checkIn} to ${checkOut}) has been received. We'll confirm shortly!`,
-    confirmed: `Great news ${guestName}! Your booking for ${roomName} at Gorilla Trekking Guest House (${checkIn} to ${checkOut}) is CONFIRMED. We look forward to welcoming you!`,
-    checked_in: `Welcome ${guestName}! You've been checked in to ${roomName} at Gorilla Trekking Guest House. Enjoy your stay!`,
-    cancelled: `Dear ${guestName}, your booking for ${roomName} (${checkIn} to ${checkOut}) at Gorilla Trekking Guest House has been cancelled. Contact us for questions.`,
-    completed: `Thank you ${guestName} for staying at Gorilla Trekking Guest House! We hope you enjoyed your time in ${roomName}. We'd love to see you again!`,
-  };
-  const message = messages[status];
-  if (!message) return;
+// Message text and recipient are resolved server-side from the booking.
+const VALID_SMS_TEMPLATES = ["pending", "confirmed", "checked_in", "cancelled", "completed"];
+
+const sendBookingSMS = async (bookingId: string, template: string) => {
+  if (!VALID_SMS_TEMPLATES.includes(template)) return;
   try {
     const { data, error } = await supabase.functions.invoke("send-booking-sms", {
-      body: { to: guestPhone, message },
+      body: { bookingId, template },
     });
     if (error) { console.error("SMS invoke error:", error); toast.error("Failed to send SMS notification"); }
     else if (data?.success) toast.success("SMS notification sent to guest");
@@ -178,17 +173,7 @@ const AdminBookings = () => {
         (status === "cancelled" && settings.sms_on_booking_cancelled);
 
       if (shouldSendSMS) {
-        let phone = booking.guest_phone;
-        let name = booking.guest_name || "Guest";
-        if (booking.user_id) {
-          const { data: guestProf } = await supabase.from("profiles")
-            .select("full_name, phone").eq("user_id", booking.user_id).single();
-          phone = guestProf?.phone || phone;
-          name = guestProf?.full_name || name;
-        }
-        if (phone) {
-          await sendBookingSMS(phone, name, booking.rooms?.name || "Room", status, format(new Date(booking.check_in), "MMM dd, yyyy"), format(new Date(booking.check_out), "MMM dd, yyyy"));
-        }
+        await sendBookingSMS(booking.id, status);
       }
     }
 
@@ -436,7 +421,7 @@ const AdminBookings = () => {
                         <span className="font-sans text-xs text-foreground">Quick SMS to {guestProfile.phone}</span>
                       </div>
                       <Button size="sm" variant="outline" className="text-xs font-sans h-7" onClick={async () => {
-                        await sendBookingSMS(guestProfile.phone!, guestProfile.full_name || "Guest", selectedBooking.rooms?.name || "Room", selectedBooking.status, format(new Date(selectedBooking.check_in), "MMM dd, yyyy"), format(new Date(selectedBooking.check_out), "MMM dd, yyyy"));
+                        await sendBookingSMS(selectedBooking.id, selectedBooking.status);
                       }}>
                         <Bell size={12} className="mr-1" /> Send SMS
                       </Button>
