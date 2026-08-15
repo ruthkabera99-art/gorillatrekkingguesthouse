@@ -84,7 +84,8 @@ const Rooms = () => {
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from("bookings").insert({
+    // total_price is recalculated server-side from the room's current rate.
+    const { data: created, error } = await supabase.from("bookings").insert({
       user_id: user.id,
       room_id: bookingRoom.id,
       check_in: checkIn,
@@ -93,22 +94,18 @@ const Rooms = () => {
       guests_children: children,
       total_price: totalPrice,
       special_requests: specialRequests || null,
-    });
+    }).select("id").single();
     if (error) {
       toast.error(error.message);
     } else {
       toast.success("Booking submitted! You'll receive a confirmation soon.");
-      // Trigger SMS notification for new booking
+      // Trigger SMS notification for new booking (message resolved server-side)
       try {
-        const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("user_id", user.id).single();
         const { data: notifSettings } = await supabase.from("site_settings").select("value").eq("key", "notifications").single();
         const settings = (notifSettings?.value as Record<string, any>) || {};
-        if (profile?.phone && settings.sms_on_booking_created) {
+        if (created?.id && settings.sms_on_booking_created) {
           await supabase.functions.invoke("send-booking-sms", {
-            body: {
-              to: profile.phone,
-              message: `Hello ${profile.full_name || "Guest"}, your booking at Gorilla Trekking Guest House for ${bookingRoom.name} (${checkIn} to ${checkOut}) has been received. We'll confirm shortly!`,
-            },
+            body: { bookingId: created.id, template: "pending" },
           });
         }
       } catch (e) {
