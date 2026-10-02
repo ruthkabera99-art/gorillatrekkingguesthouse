@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { explainServerCorrections, GUEST_EDIT_RULES } from "@/lib/bookingGuard";
 import { Users, ArrowLeft, Check, CalendarDays, Wifi, Wind, Tv, Coffee, Car, UtensilsCrossed, Bath, Eye, Lock, Sparkles } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -94,10 +95,11 @@ const Rooms = () => {
       guests_children: children,
       total_price: totalPrice,
       special_requests: specialRequests || null,
-    }).select("id").single();
+    }).select("id, total_price, status, check_in, check_out").single();
     if (error) {
       toast.error(error.message);
     } else {
+      explainServerCorrections({ total_price: totalPrice, check_in: checkIn, check_out: checkOut }, created as any);
       toast.success("Booking submitted! You'll receive a confirmation soon.");
       // Trigger SMS notification for new booking (message resolved server-side)
       try {
@@ -271,6 +273,7 @@ const Rooms = () => {
               <div>
                 <Label className="font-sans text-xs">Special Requests (optional)</Label>
                 <Textarea value={specialRequests} onChange={e => setSpecialRequests(e.target.value)} placeholder="Any preferences or needs..." className="mt-1 font-sans" rows={2} />
+                <p className="mt-2 text-xs text-muted-foreground font-sans rounded-md border border-border bg-muted/40 p-2">{GUEST_EDIT_RULES}</p>
               </div>
 
               {/* Price Calculation */}
