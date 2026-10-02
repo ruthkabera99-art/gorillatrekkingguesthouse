@@ -259,7 +259,6 @@ To book, direct guests to the Rooms page on the site or to WhatsApp. You cannot 
           .insert({ session_id: sessionId, user_id: userId, role: "assistant", content });
         if (error) console.error("save assistant message failed", error.message);
       },
-      },
     });
   } catch (e) {
     console.error("guest-assistant error", e);
