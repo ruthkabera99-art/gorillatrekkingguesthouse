@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { explainServerCorrections, GUEST_EDIT_RULES } from "@/lib/bookingGuard";
 import { ArrowLeft, Users, Check, Wifi, Wind, Tv, Coffee, Car, UtensilsCrossed, Bath, Eye, Lock, Sparkles } from "lucide-react";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
@@ -68,7 +69,7 @@ const RoomDetail = () => {
     if (adults + children > room.capacity) { toast.error(`Max capacity is ${room.capacity} guests.`); return; }
     setBooking(true);
     const totalPrice = nights * Number(room.base_price);
-    const { error } = await supabase.from("bookings").insert({
+    const { data: created, error } = await supabase.from("bookings").insert({
       user_id: user.id,
       room_id: room.id,
       check_in: checkIn,
@@ -77,9 +78,10 @@ const RoomDetail = () => {
       guests_children: children,
       total_price: totalPrice,
       special_requests: specialRequests || null,
-    });
+    }).select("id, total_price, status, check_in, check_out").single();
     if (error) toast.error(error.message);
     else {
+      explainServerCorrections({ total_price: totalPrice, check_in: checkIn, check_out: checkOut }, created as any);
       toast.success("Booking created! You'll receive a confirmation.");
       navigate("/dashboard");
     }
@@ -206,6 +208,7 @@ const RoomDetail = () => {
               <div>
                 <Label className="font-sans text-xs">Special Requests (optional)</Label>
                 <Textarea value={specialRequests} onChange={e => setSpecialRequests(e.target.value)} placeholder="Early check-in, extra pillows..." className="mt-1 font-sans" rows={2} />
+                <p className="mt-2 text-xs text-muted-foreground font-sans rounded-md border border-border bg-muted/40 p-2">{GUEST_EDIT_RULES}</p>
               </div>
               {nights > 0 && (
                 <div className="bg-muted rounded-lg p-3 space-y-1">

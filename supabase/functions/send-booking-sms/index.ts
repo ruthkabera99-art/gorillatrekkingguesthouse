@@ -65,6 +65,14 @@ serve(async (req) => {
     }
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const logAttempt = async (status: string, extra: { recipient?: string | null; error?: string; sid?: string } = {}) => {
+      try {
+        await admin.from('sms_logs').insert({
+          booking_id: bookingId, template, recipient: extra.recipient ?? null,
+          status, error: extra.error ?? null, provider_sid: extra.sid ?? null, requested_by: caller.id,
+        });
+      } catch (e) { console.error('sms log failed', e); }
+    };
 
     // --- Authorization: caller must own the booking, or be an admin ---
     const { data: roleRow } = await admin
@@ -81,8 +89,9 @@ serve(async (req) => {
       .eq('id', bookingId)
       .maybeSingle();
 
-    if (!booking) return json({ success: false, error: 'Booking not found' }, 404);
+    if (!booking) { await logAttempt('failed', { error: 'Booking not found' }); return json({ success: false, error: 'Booking not found' }, 404); }
     if (!isAdmin && booking.user_id !== caller.id) {
+      await logAttempt('blocked', { error: 'Forbidden: caller does not own booking' });
       return json({ success: false, error: 'Forbidden' }, 403);
     }
 
@@ -98,7 +107,7 @@ serve(async (req) => {
       guestName = profile?.full_name || guestName;
       to = profile?.phone || to;
     }
-    if (!to) return json({ success: false, error: 'No phone number on file for this booking' }, 200);
+    if (!to) { await logAttempt('skipped', { error: 'No phone number on file' }); return json({ success: false, error: 'No phone number on file for this booking' }, 200); }
 
     const message = TEMPLATES[template]({
       guestName: guestName || 'Guest',
@@ -111,6 +120,7 @@ serve(async (req) => {
     const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
     if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
       console.log('Twilio not configured, skipping SMS');
+      await logAttempt('skipped', { recipient: to, error: 'Twilio not configured' });
       return json({ success: false, error: 'Twilio not configured. Connect Twilio in settings to enable SMS.' });
     }
 
@@ -128,10 +138,12 @@ serve(async (req) => {
 
     const data = await response.json();
     if (!response.ok) {
+      await logAttempt('failed', { recipient: to, error: `Provider ${response.status}: ${data?.message ?? 'error'}`.slice(0, 500) });
       console.error(`Twilio error [${response.status}]:`, JSON.stringify(data));
       return json({ success: false, error: 'SMS provider request failed' }, response.status);
     }
 
+    await logAttempt('sent', { recipient: to, sid: data.sid });
     return json({ success: true, sid: data.sid });
   } catch (error: unknown) {
     console.error('SMS error:', error);
