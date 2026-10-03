@@ -124,6 +124,7 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  html { overflow-x: clip; }
   body {
     @apply bg-background text-foreground font-sans;
     -webkit-font-smoothing: antialiased;
