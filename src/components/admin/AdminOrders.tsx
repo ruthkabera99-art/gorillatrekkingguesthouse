@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Printer, Receipt, History } from "lucide-react";
+import { printOrder } from "@/lib/printOrder";
 
 const fmt = (n: number) => `RWF ${n.toLocaleString()}`;
 
@@ -16,6 +17,7 @@ const AdminOrders = () => {
   const [filter, setFilter] = useState<string>("all");
   const [waiterDialog, setWaiterDialog] = useState<{ open: boolean; orderId: string }>({ open: false, orderId: "" });
   const [waiterName, setWaiterName] = useState("");
+  const [history, setHistory] = useState<{ open: boolean; title: string; rows: any[] }>({ open: false, title: "", rows: [] });
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -59,13 +61,14 @@ const AdminOrders = () => {
   };
 
   const updateOrderStatus = async (id: string, status: string) => {
+    if (status === "cancelled" && !confirm("Cancel this order? Stock will be restored.")) return;
     const { error } = await supabase.from("orders").update({ status } as any).eq("id", id);
     if (error) toast.error(error.message);
     else {
       toast.success(`Order ${status}`);
-      // Sync order items status
+      // Sync item statuses, but never revive items that were already cancelled
       if (status === "ready" || status === "delivered" || status === "cancelled") {
-        await supabase.from("order_items").update({ status } as any).eq("order_id", id);
+        await supabase.from("order_items").update({ status } as any).eq("order_id", id).neq("status", "cancelled");
       }
       fetchOrders();
     }
@@ -75,6 +78,18 @@ const AdminOrders = () => {
     const { error } = await supabase.from("orders").update({ payment_status: status } as any).eq("id", id);
     if (error) toast.error(error.message);
     else { toast.success(`Payment marked ${status}`); fetchOrders(); }
+  };
+
+  const doPrint = (o: any, kind: "order" | "bill") => {
+    if (!printOrder(o, kind)) toast.error("Please allow pop-ups to print");
+  };
+
+  const openHistory = async (o: any) => {
+    setHistory({ open: true, title: `#${o.id.slice(0, 8).toUpperCase()}`, rows: [] });
+    const ids = [o.id, ...(o.order_items || []).map((i: any) => i.id)];
+    const { data } = await (supabase as any).from("audit_log").select("*")
+      .in("record_id", ids).order("created_at", { ascending: true });
+    setHistory({ open: true, title: `#${o.id.slice(0, 8).toUpperCase()}`, rows: data || [] });
   };
 
   return (
@@ -162,6 +177,11 @@ const AdminOrders = () => {
                         <Button size="sm" className="text-xs font-sans" variant="destructive" onClick={() => updateOrderStatus(o.id, "cancelled")}>Cancel</Button>
                       )}
                     </div>
+                    <div className="flex gap-1 flex-wrap justify-end">
+                      <Button size="sm" variant="outline" className="text-xs font-sans gap-1" onClick={() => doPrint(o, "order")}><Printer size={12} />Order</Button>
+                      <Button size="sm" variant="outline" className="text-xs font-sans gap-1" onClick={() => doPrint(o, "bill")}><Receipt size={12} />Bill</Button>
+                      <Button size="sm" variant="ghost" className="text-xs font-sans gap-1" onClick={() => openHistory(o)}><History size={12} />History</Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -191,6 +211,25 @@ const AdminOrders = () => {
             <Button variant="outline" onClick={() => setWaiterDialog({ open: false, orderId: "" })} className="font-sans">Cancel</Button>
             <Button onClick={confirmStart} className="font-sans">Start Order</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={history.open} onOpenChange={(open) => setHistory({ ...history, open })}>
+        <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-serif">Order history {history.title}</DialogTitle></DialogHeader>
+          {history.rows.length === 0 ? <p className="text-sm text-muted-foreground font-sans">No recorded changes yet.</p> : (
+            <ol className="space-y-2 text-sm font-sans">
+              {history.rows.map((r: any) => (
+                <li key={r.id} className="border-l-2 border-primary pl-3">
+                  <p className="font-medium">{r.table_name === "orders" ? "Order" : "Item"} {r.action.toLowerCase()} · <span className="capitalize">{r.actor_role || "system"}</span></p>
+                  <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</p>
+                  {r.action === "UPDATE" && (r.changed_fields || []).map((f: string) => (
+                    <p key={f} className="text-xs font-mono">{f}: {String(r.old_data?.[f] ?? "—")} → {String(r.new_data?.[f] ?? "—")}</p>
+                  ))}
+                </li>
+              ))}
+            </ol>
+          )}
         </DialogContent>
       </Dialog>
     </div>
