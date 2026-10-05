@@ -40,7 +40,12 @@ const statusConfig: Record<string, { icon: any; label: string; color: string; me
 };
 
 const Menu = () => {
-  const { format: formatRWF } = useCurrency();
+  const { format: formatLocal, currency } = useCurrency();
+  // Orders and bills are always in RWF (same as Admin → Menu Products); show conversion as a hint
+  const formatRWF = (rwf: number) => {
+    const base = `RWF ${Math.round(Number(rwf) || 0).toLocaleString()}`;
+    return currency === "RWF" ? base : `${base} (≈ ${formatLocal(Number(rwf) || 0)})`;
+  };
   const [searchParams] = useSearchParams();
   const tableNumber = searchParams.get("table");
   const roomSource = searchParams.get("source") === "room";
