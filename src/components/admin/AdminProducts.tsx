@@ -35,6 +35,12 @@ const AdminProducts = () => {
     setLoading(false);
   };
   useEffect(() => { fetch(); }, [filterDept]);
+  useEffect(() => {
+    const ch = supabase.channel("admin-products")
+      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => fetch())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [filterDept]);
 
   const openEdit = (p: any) => {
     setEditing(p);
@@ -49,6 +55,9 @@ const AdminProducts = () => {
   };
 
   const save = async () => {
+    if (!form.name.trim()) { toast.error("Name is required"); return; }
+    if (!(Number(form.price) > 0)) { toast.error("Enter a valid price"); return; }
+    if (Number(form.stock) < 0) { toast.error("Stock can't be negative"); return; }
     const payload = { name: form.name, price: Number(form.price), category: form.category as any, department: form.department as any, description: form.description || null, available: form.available, stock: Number(form.stock) || 0 };
     if (editing) {
       const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
@@ -66,12 +75,13 @@ const AdminProducts = () => {
   const del = async (id: string) => {
     if (!confirm("Delete this product?")) return;
     const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) toast.error(error.code === "23503" ? "This item has past orders — switch it off instead of deleting." : error.message);
     else { toast.success("Deleted"); fetch(); }
   };
 
   const toggle = async (id: string, available: boolean) => {
-    await supabase.from("products").update({ available } as any).eq("id", id);
+    const { error } = await supabase.from("products").update({ available } as any).eq("id", id);
+    if (error) toast.error(error.message); else toast.success(available ? "Shown on menu" : "Hidden from menu");
     fetch();
   };
 
@@ -158,7 +168,7 @@ const AdminProducts = () => {
                   <p className="text-xs text-muted-foreground font-sans capitalize">{p.department} · {p.category.replace("_", " ")}</p>
                   <p className="text-sm font-sans text-primary font-bold mt-1">{fmt(Number(p.price))}</p>
                   <p className={`text-xs font-sans mt-0.5 ${(p.stock !== undefined && p.stock !== null && p.stock > 0) ? (p.stock <= 5 ? "text-orange-500 font-semibold" : "text-muted-foreground") : "text-muted-foreground"}`}>
-                    {(p.stock !== undefined && p.stock !== null && p.stock > 0) ? `Stock: ${p.stock}` : "Unlimited"}
+                    {(p.stock !== undefined && p.stock !== null && p.stock > 0) ? `Stock: ${p.stock}` : "Unlimited"}{!p.available && " · Hidden from menu"}
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
