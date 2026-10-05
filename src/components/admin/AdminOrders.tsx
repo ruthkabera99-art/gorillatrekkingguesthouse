@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { RefreshCw, Printer, Receipt, History } from "lucide-react";
 import { printOrder } from "@/lib/printOrder";
+import OrderStepper from "./OrderStepper";
 
 const fmt = (n: number) => `RWF ${n.toLocaleString()}`;
 
@@ -36,6 +37,7 @@ const AdminOrders = () => {
   useEffect(() => {
     const ch = supabase.channel("admin-orders")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => fetchOrders())
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => fetchOrders())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [filter]);
@@ -142,6 +144,7 @@ const AdminOrders = () => {
                         "bg-red-100 text-red-700"
                       }`}>{o.payment_status}</span>
                     </div>
+                    <OrderStepper order={o} />
                     {o.assigned_waiter && (
                       <p className="text-xs font-sans text-blue-600">🧑‍🍳 Waiter: {o.assigned_waiter}</p>
                     )}
@@ -224,7 +227,7 @@ const AdminOrders = () => {
                   <p className="font-medium">{r.table_name === "orders" ? "Order" : "Item"} {r.action.toLowerCase()} · <span className="capitalize">{r.actor_role || "system"}</span></p>
                   <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</p>
                   {r.action === "UPDATE" && (r.changed_fields || []).map((f: string) => (
-                    <p key={f} className="text-xs font-mono">{f}: {String(r.old_data?.[f] ?? "—")} → {String(r.new_data?.[f] ?? "—")}</p>
+                    <p key={f} className="text-xs">{({status:"Step",payment_status:"Payment",assigned_waiter:"Waiter",total:"Total"} as any)[f] || f}: {String(r.old_data?.[f] ?? "—")} → <strong>{String(r.new_data?.[f] ?? "—")}</strong>{r.table_name === "order_items" && r.new_data?.department ? ` (${r.new_data.department})` : ""}</p>
                   ))}
                 </li>
               ))}

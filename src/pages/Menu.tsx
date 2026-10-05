@@ -18,7 +18,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 
 type Product = {
   id: string; name: string; description: string | null; price: number;
-  category: string; department: string; image_url: string | null; available: boolean;
+  category: string; department: string; image_url: string | null; available: boolean; stock?: number;
 };
 type CartItem = { product: Product; quantity: number; note: string; };
 type GuestInfo = { name: string; phone: string; table?: string };
@@ -103,6 +103,24 @@ const Menu = () => {
     fetchData();
   }, [user]);
 
+  // Live sync with admin product changes (price, availability, stock)
+  useEffect(() => {
+    const ch = supabase.channel("menu-products")
+      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, async () => {
+        const { data } = await supabase.from("products").select("*").eq("available", true).order("category");
+        const list = (data as Product[]) || [];
+        setProducts(list);
+        setCart((prev) => prev.flatMap((i) => {
+          const fresh = list.find((p) => p.id === i.product.id);
+          if (!fresh) return [];
+          const max = fresh.stock && fresh.stock > 0 ? fresh.stock : 50;
+          return [{ ...i, product: fresh, quantity: Math.min(i.quantity, max) }];
+        }));
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
   // Realtime tracking for placed order
   useEffect(() => {
     if (!placedOrder) return;
@@ -148,6 +166,8 @@ const Menu = () => {
   const addToCart = (product: Product) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
+      const max = product.stock && product.stock > 0 ? product.stock : 50;
+      if (existing && existing.quantity >= max) { toast.error(`Only ${max} available`); return prev; }
       if (existing) return prev.map((i) => i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
       return [...prev, { product, quantity: 1, note: "" }];
     });
@@ -156,7 +176,7 @@ const Menu = () => {
 
   const updateQuantity = (productId: string, delta: number) => {
     setCart((prev) =>
-      prev.map((i) => i.product.id === productId ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i).filter((i) => i.quantity > 0)
+      prev.map((i) => i.product.id === productId ? { ...i, quantity: Math.max(0, Math.min(i.quantity + delta, i.product.stock && i.product.stock > 0 ? i.product.stock : 50)) } : i).filter((i) => i.quantity > 0)
     );
   };
 
