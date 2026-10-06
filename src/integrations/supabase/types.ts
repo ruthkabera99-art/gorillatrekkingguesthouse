@@ -208,6 +208,7 @@ export type Database = {
       orders: {
         Row: {
           assigned_waiter: string | null
+          assigned_waiter_id: string | null
           created_at: string
           guest_name: string | null
           guest_phone: string | null
@@ -223,6 +224,7 @@ export type Database = {
         }
         Insert: {
           assigned_waiter?: string | null
+          assigned_waiter_id?: string | null
           created_at?: string
           guest_name?: string | null
           guest_phone?: string | null
@@ -238,6 +240,7 @@ export type Database = {
         }
         Update: {
           assigned_waiter?: string | null
+          assigned_waiter_id?: string | null
           created_at?: string
           guest_name?: string | null
           guest_phone?: string | null
@@ -426,6 +429,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      role_permissions: {
+        Row: {
+          role: Database["public"]["Enums"]["app_role"]
+          tabs: string[]
+          updated_at: string
+        }
+        Insert: {
+          role: Database["public"]["Enums"]["app_role"]
+          tabs?: string[]
+          updated_at?: string
+        }
+        Update: {
+          role?: Database["public"]["Enums"]["app_role"]
+          tabs?: string[]
+          updated_at?: string
+        }
+        Relationships: []
       }
       rooms: {
         Row: {
