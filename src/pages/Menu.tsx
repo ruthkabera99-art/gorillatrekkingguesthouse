@@ -88,10 +88,19 @@ const Menu = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [{ data: prods }, { data: tbls }] = await Promise.all([
+      const load = () => Promise.all([
         supabase.from("products").select("*").eq("available", true).order("category"),
         supabase.from("restaurant_tables").select("id, table_number").order("table_number"),
       ]);
+      let [{ data: prods, error: pErr }, { data: tbls }] = await load();
+      if (pErr) {
+        // Usually an expired/stale login stored in the browser — refresh it, or drop it and load as a visitor
+        console.warn("Menu load failed, retrying:", pErr.message);
+        const { error: rErr } = await supabase.auth.refreshSession();
+        if (rErr) await supabase.auth.signOut({ scope: "local" });
+        [{ data: prods, error: pErr }, { data: tbls }] = await load();
+        if (pErr) toast.error("Couldn't load the menu. Please check your connection and refresh.");
+      }
       setProducts((prods as Product[]) || []);
       setTables((tbls as any) || []);
       if (user) {
@@ -112,7 +121,8 @@ const Menu = () => {
   useEffect(() => {
     const ch = supabase.channel("menu-products")
       .on("postgres_changes", { event: "*", schema: "public", table: "products" }, async () => {
-        const { data } = await supabase.from("products").select("*").eq("available", true).order("category");
+        const { data, error } = await supabase.from("products").select("*").eq("available", true).order("category");
+        if (error) return; // keep current menu instead of blanking it
         const list = (data as Product[]) || [];
         setProducts(list);
         setCart((prev) => prev.flatMap((i) => {
