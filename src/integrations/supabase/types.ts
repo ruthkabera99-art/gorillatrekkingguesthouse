@@ -208,6 +208,7 @@ export type Database = {
       orders: {
         Row: {
           assigned_waiter: string | null
+          assigned_waiter_id: string | null
           created_at: string
           guest_name: string | null
           guest_phone: string | null
@@ -223,6 +224,7 @@ export type Database = {
         }
         Insert: {
           assigned_waiter?: string | null
+          assigned_waiter_id?: string | null
           created_at?: string
           guest_name?: string | null
           guest_phone?: string | null
@@ -238,6 +240,7 @@ export type Database = {
         }
         Update: {
           assigned_waiter?: string | null
+          assigned_waiter_id?: string | null
           created_at?: string
           guest_name?: string | null
           guest_phone?: string | null
@@ -427,6 +430,24 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          role: Database["public"]["Enums"]["app_role"]
+          tabs: string[]
+          updated_at: string
+        }
+        Insert: {
+          role: Database["public"]["Enums"]["app_role"]
+          tabs?: string[]
+          updated_at?: string
+        }
+        Update: {
+          role?: Database["public"]["Enums"]["app_role"]
+          tabs?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rooms: {
         Row: {
           amenities: string[] | null
@@ -552,7 +573,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "waiter"
+        | "kitchen"
+        | "bar"
+        | "receptionist"
       booking_status:
         | "pending"
         | "confirmed"
@@ -714,7 +742,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "waiter",
+        "kitchen",
+        "bar",
+        "receptionist",
+      ],
       booking_status: [
         "pending",
         "confirmed",
