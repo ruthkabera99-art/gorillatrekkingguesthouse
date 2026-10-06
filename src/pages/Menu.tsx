@@ -121,7 +121,8 @@ const Menu = () => {
   useEffect(() => {
     const ch = supabase.channel("menu-products")
       .on("postgres_changes", { event: "*", schema: "public", table: "products" }, async () => {
-        const { data } = await supabase.from("products").select("*").eq("available", true).order("category");
+        const { data, error } = await supabase.from("products").select("*").eq("available", true).order("category");
+        if (error) return; // keep current menu instead of blanking it
         const list = (data as Product[]) || [];
         setProducts(list);
         setCart((prev) => prev.flatMap((i) => {
