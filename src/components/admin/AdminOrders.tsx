@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { RefreshCw, Printer, Receipt, History } from "lucide-react";
+import { RefreshCw, Printer, Receipt, History, Plus, Minus } from "lucide-react";
+import { useStaffRole } from "@/hooks/useStaffRole";
+import { useAuth } from "@/contexts/AuthContext";
 import { printOrder } from "@/lib/printOrder";
 import OrderStepper from "./OrderStepper";
 
@@ -19,6 +21,61 @@ const AdminOrders = () => {
   const [waiterDialog, setWaiterDialog] = useState<{ open: boolean; orderId: string }>({ open: false, orderId: "" });
   const [waiterName, setWaiterName] = useState("");
   const [history, setHistory] = useState<{ open: boolean; title: string; rows: any[] }>({ open: false, title: "", rows: [] });
+
+  const { role } = useStaffRole();
+  const { user } = useAuth();
+  const isWaiter = role === "waiter";
+  const [myName, setMyName] = useState("");
+  const [newOpen, setNewOpen] = useState(false);
+  const [menu, setMenu] = useState<any[]>([]);
+  const [tables, setTables] = useState<any[]>([]);
+  const [draft, setDraft] = useState<{ table: string; guest: string; notes: string; qty: Record<string, number> }>({ table: "", guest: "", notes: "", qty: {} });
+  const [placing, setPlacing] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("full_name").eq("user_id", user.id).maybeSingle().then(({ data }) => setMyName(data?.full_name || user.email?.split("@")[0] || "Waiter"));
+  }, [user]);
+
+  const openNew = async () => {
+    setDraft({ table: "", guest: "", notes: "", qty: {} });
+    setNewOpen(true);
+    const [{ data: p }, { data: t }] = await Promise.all([
+      supabase.from("products").select("*").eq("available", true).order("category"),
+      supabase.from("restaurant_tables").select("id, table_number").order("table_number"),
+    ]);
+    setMenu(p || []); setTables(t || []);
+  };
+
+  const setQty = (prod: any, d: number) => setDraft((x) => {
+    const max = prod.stock > 0 ? prod.stock : 50;
+    const n = Math.max(0, Math.min((x.qty[prod.id] || 0) + d, max));
+    return { ...x, qty: { ...x.qty, [prod.id]: n } };
+  });
+  const draftItems = menu.filter((p) => (draft.qty[p.id] || 0) > 0);
+  const draftTotal = draftItems.reduce((s, p) => s + p.price * draft.qty[p.id], 0);
+
+  const placeOrder = async () => {
+    if (!draft.table) { toast.error("Choose a table"); return; }
+    if (draftItems.length === 0) { toast.error("Add at least one item"); return; }
+    setPlacing(true);
+    const { data: order, error } = await supabase.from("orders").insert({
+      source_type: "table", source_id: draft.table, guest_name: draft.guest.trim() || null,
+      notes: draft.notes.trim() || null, payment_status: "unpaid", user_id: null,
+    } as any).select().single();
+    if (error || !order) { setPlacing(false); toast.error(error?.message || "Couldn't create order"); return; }
+    const { error: iErr } = await supabase.from("order_items").insert(draftItems.map((p) => ({
+      order_id: order.id, product_id: p.id, quantity: draft.qty[p.id], unit_price: p.price, department: p.department,
+    })) as any);
+    if (iErr) { toast.error(iErr.message); await supabase.from("orders").update({ status: "cancelled" } as any).eq("id", order.id); }
+    else {
+      if (!isWaiter) await supabase.from("orders").update({ assigned_waiter: myName, assigned_waiter_id: user?.id } as any).eq("id", order.id);
+      else await supabase.from("orders").update({ assigned_waiter: myName } as any).eq("id", order.id);
+      toast.success(`Order placed for Table ${draft.table}`);
+      setNewOpen(false); fetchOrders();
+    }
+    setPlacing(false);
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -43,22 +100,26 @@ const AdminOrders = () => {
   }, [filter]);
 
   const handleStart = (orderId: string) => {
+    if (isWaiter) { startWith(orderId, myName); return; }
     setWaiterName("");
     setWaiterDialog({ open: true, orderId });
   };
 
-  const confirmStart = async () => {
-    if (!waiterName.trim()) { toast.error("Please enter waiter name"); return; }
+  const startWith = async (orderId: string, name: string) => {
     const { error } = await supabase.from("orders")
-      .update({ status: "preparing", assigned_waiter: waiterName.trim() } as any)
-      .eq("id", waiterDialog.orderId);
+      .update({ status: "preparing", assigned_waiter: name } as any)
+      .eq("id", orderId);
     if (error) toast.error(error.message);
     else {
-      toast.success(`Order started — assigned to ${waiterName.trim()}`);
-      // Also update all order items to preparing
-      await supabase.from("order_items").update({ status: "preparing" } as any).eq("order_id", waiterDialog.orderId);
+      toast.success(`Order started — assigned to ${name}`);
+      await supabase.from("order_items").update({ status: "preparing" } as any).eq("order_id", orderId).neq("status", "cancelled");
       fetchOrders();
     }
+  };
+
+  const confirmStart = async () => {
+    if (!waiterName.trim()) { toast.error("Please enter waiter name"); return; }
+    await startWith(waiterDialog.orderId, waiterName.trim());
     setWaiterDialog({ open: false, orderId: "" });
   };
 
@@ -109,6 +170,8 @@ const AdminOrders = () => {
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={fetchOrders} className="font-sans gap-1"><RefreshCw size={14} />Refresh</Button>
+        <Button size="sm" onClick={openNew} className="font-sans gap-1"><Plus size={14} />New order</Button>
+        {isWaiter && <span className="text-xs text-muted-foreground font-sans">Showing new orders and orders you took</span>}
         <span className="text-sm text-muted-foreground font-sans ml-auto">{orders.length} orders</span>
       </div>
 
@@ -217,6 +280,38 @@ const AdminOrders = () => {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={newOpen} onOpenChange={setNewOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-serif">New order</DialogTitle></DialogHeader>
+          <div className="space-y-3 font-sans">
+            <div className="grid grid-cols-2 gap-2">
+              <Select value={draft.table} onValueChange={(v) => setDraft({ ...draft, table: v })}>
+                <SelectTrigger><SelectValue placeholder="Table" /></SelectTrigger>
+                <SelectContent>{tables.map((t) => <SelectItem key={t.id} value={String(t.table_number)}>Table {t.table_number}</SelectItem>)}</SelectContent>
+              </Select>
+              <Input placeholder="Guest name (optional)" value={draft.guest} onChange={(e) => setDraft({ ...draft, guest: e.target.value })} />
+            </div>
+            <div className="divide-y divide-border border border-border rounded-md max-h-72 overflow-y-auto">
+              {menu.map((p) => (
+                <div key={p.id} className="flex items-center gap-2 p-2 text-sm">
+                  <span>{p.department === "kitchen" ? "🍽️" : "🍺"}</span>
+                  <span className="flex-1">{p.name}<span className="text-muted-foreground"> · {fmt(Number(p.price))}</span></span>
+                  <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => setQty(p, -1)} aria-label={`Less ${p.name}`}><Minus size={12} /></Button>
+                  <span className="w-6 text-center">{draft.qty[p.id] || 0}</span>
+                  <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => setQty(p, 1)} aria-label={`More ${p.name}`}><Plus size={12} /></Button>
+                </div>
+              ))}
+            </div>
+            <Input placeholder="Notes for kitchen/bar (optional)" value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} />
+            <p className="text-right font-bold text-primary">{fmt(draftTotal)}</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewOpen(false)}>Cancel</Button>
+            <Button onClick={placeOrder} disabled={placing}>Place order</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={history.open} onOpenChange={(open) => setHistory({ ...history, open })}>
         <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="font-serif">Order history {history.title}</DialogTitle></DialogHeader>
@@ -224,7 +319,7 @@ const AdminOrders = () => {
             <ol className="space-y-2 text-sm font-sans">
               {history.rows.map((r: any) => (
                 <li key={r.id} className="border-l-2 border-primary pl-3">
-                  <p className="font-medium">{r.table_name === "orders" ? "Order" : "Item"} {r.action.toLowerCase()} · <span className="capitalize">{r.actor_role || "system"}</span></p>
+                  <p className="font-medium">{r.table_name === "orders" ? "Order" : "Item"} {r.action.toLowerCase()} · <span className="capitalize">{r.actor_role || "system"}</span>{r.new_data?.assigned_waiter && r.actor_role === "waiter" ? ` (${r.new_data.assigned_waiter})` : ""}</p>
                   <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</p>
                   {r.action === "UPDATE" && (r.changed_fields || []).map((f: string) => (
                     <p key={f} className="text-xs">{({status:"Step",payment_status:"Payment",assigned_waiter:"Waiter",total:"Total"} as any)[f] || f}: {String(r.old_data?.[f] ?? "—")} → <strong>{String(r.new_data?.[f] ?? "—")}</strong>{r.table_name === "order_items" && r.new_data?.department ? ` (${r.new_data.department})` : ""}</p>
