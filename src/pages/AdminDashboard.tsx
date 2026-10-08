@@ -34,6 +34,8 @@ import AdminBar from "@/components/admin/AdminBar";
 import AdminBookings from "@/components/admin/AdminBookings";
 import AdminSecurity from "@/components/admin/AdminSecurity";
 import AdminAuditLog from "@/components/admin/AdminAuditLog";
+import AdminStaff from "@/components/admin/AdminStaff";
+import { useStaffRole, ROLE_LABELS } from "@/hooks/useStaffRole";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
@@ -46,6 +48,7 @@ const tabs = [
   { key: "products", label: "Menu Products", icon: UtensilsCrossed },
   { key: "tables", label: "Tables", icon: BarChart3 },
   { key: "promotions", label: "Promotions", icon: Tag },
+  { key: "staff", label: "Staff & Roles", icon: Users },
   { key: "audit", label: "Audit & SMS Log", icon: History },
   { key: "security", label: "Security", icon: ShieldCheck },
   { key: "settings", label: "Settings", icon: Settings },
@@ -56,26 +59,15 @@ const AdminDashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "overview";
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [pendingCounts, setPendingCounts] = useState<{ kitchen: number; bar: number }>({ kitchen: 0, bar: 0 });
+  const { role, isAdmin, can, loading: roleLoading } = useStaffRole();
+  const visibleTabs = tabs.filter((t) => can(t.key));
+  const fallbackTab = visibleTabs[0]?.key || "overview";
+  const activeTab = can(searchParams.get("tab") || "") ? searchParams.get("tab")! : fallbackTab;
 
   useEffect(() => {
     if (!authLoading && !user) { navigate("/auth"); return; }
-    if (!user) return;
-    const checkRole = async () => {
-      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-      const roles = (data || []).map((r) => r.role);
-      if (roles.includes("admin") || roles.includes("moderator")) {
-        setIsAdmin(true);
-      } else {
-        navigate("/dashboard");
-      }
-      setChecking(false);
-    };
-    checkRole();
-  }, [user, authLoading, navigate]);
+    if (!roleLoading && user && !role) navigate("/dashboard");
+  }, [user, authLoading, role, roleLoading, navigate]);
 
   // Real-time pending counts for kitchen & bar
   useEffect(() => {
@@ -99,13 +91,13 @@ const AdminDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  if (authLoading || checking) return (
+  if (authLoading || roleLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
-  if (!isAdmin) return null;
+  if (!role) return null;
 
   const setTab = (key: string) => setSearchParams({ tab: key });
 
@@ -129,8 +121,9 @@ const AdminDashboard = () => {
       case "audit": return <AdminAuditLog />;
       case "security": return <AdminSecurity />;
       case "settings": return <AdminSettings />;
+      case "staff": return <AdminStaff />;
 
-      default: return <AdminOverview />;
+      default: return can("overview") ? <AdminOverview /> : null;
     }
   };
 
@@ -140,14 +133,14 @@ const AdminDashboard = () => {
         <Sidebar className="border-r border-sidebar-border">
           <SidebarContent>
             <div className="p-4 border-b border-sidebar-border">
-              <h2 className="font-serif text-lg font-bold text-sidebar-foreground">Admin Panel</h2>
+              <h2 className="font-serif text-lg font-bold text-sidebar-foreground">{isAdmin ? "Admin Panel" : `${ROLE_LABELS[role]} Panel`}</h2>
               <p className="text-xs text-muted-foreground font-sans">Gorilla Trekking GH</p>
             </div>
             <SidebarGroup>
               <SidebarGroupLabel>Management</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {tabs.map((tab) => {
+                  {visibleTabs.map((tab) => {
                     const count = getBadgeCount(tab.key);
                     return (
                       <SidebarMenuItem key={tab.key}>
@@ -198,7 +191,7 @@ const AdminDashboard = () => {
         <main className="flex-1 overflow-auto">
           <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border h-14 flex items-center px-6 gap-4">
             <SidebarTrigger />
-            <h1 className="font-serif text-lg font-semibold text-foreground capitalize">{activeTab}</h1>
+            <h1 className="font-serif text-lg font-semibold text-foreground">{tabs.find((t) => t.key === activeTab)?.label}</h1>
           </header>
           <div className="p-6">
             {renderContent()}
