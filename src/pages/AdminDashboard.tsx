@@ -167,16 +167,16 @@ const AdminDashboard = () => {
               <SidebarGroupLabel>Quick Links</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <SidebarMenuItem>
+                  {can("kitchen") && <SidebarMenuItem>
                     <SidebarMenuButton onClick={() => navigate("/kitchen")} className="cursor-pointer">
                       <ChefHat className="mr-2 h-4 w-4" /><span>Kitchen Screen</span>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
+                  </SidebarMenuItem>}
+                  {can("bar") && <SidebarMenuItem>
                     <SidebarMenuButton onClick={() => navigate("/bar")} className="cursor-pointer">
                       <Wine className="mr-2 h-4 w-4" /><span>Bar Screen</span>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  </SidebarMenuItem>}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
