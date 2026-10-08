@@ -60,6 +60,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { role, isAdmin, can, loading: roleLoading } = useStaffRole();
+  const [pendingCounts, setPendingCounts] = useState<{ kitchen: number; bar: number }>({ kitchen: 0, bar: 0 });
   const visibleTabs = tabs.filter((t) => can(t.key));
   const fallbackTab = visibleTabs[0]?.key || "overview";
   const activeTab = can(searchParams.get("tab") || "") ? searchParams.get("tab")! : fallbackTab;
