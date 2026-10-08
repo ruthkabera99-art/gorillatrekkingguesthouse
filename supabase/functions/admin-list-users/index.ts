@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
         full_name: profile?.full_name || '',
         created_at: u.created_at,
         roles: userRoles,
+        banned_until: (u as any).banned_until || null,
       };
     });
 
