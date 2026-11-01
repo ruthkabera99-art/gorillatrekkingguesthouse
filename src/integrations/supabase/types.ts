@@ -209,6 +209,7 @@ export type Database = {
         Row: {
           assigned_waiter: string | null
           assigned_waiter_id: string | null
+          booking_id: string | null
           created_at: string
           guest_name: string | null
           guest_phone: string | null
@@ -225,6 +226,7 @@ export type Database = {
         Insert: {
           assigned_waiter?: string | null
           assigned_waiter_id?: string | null
+          booking_id?: string | null
           created_at?: string
           guest_name?: string | null
           guest_phone?: string | null
@@ -241,6 +243,7 @@ export type Database = {
         Update: {
           assigned_waiter?: string | null
           assigned_waiter_id?: string | null
+          booking_id?: string | null
           created_at?: string
           guest_name?: string | null
           guest_phone?: string | null
@@ -254,7 +257,15 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "orders_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {

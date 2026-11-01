@@ -75,14 +75,17 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
     setLoading(true);
     const roomName = booking.rooms?.name || "";
 
-    const { data } = await supabase
-      .from("orders")
-      .select("*, order_items(*, product:products(name, department))")
-      .eq("source_type", "room")
-      .in("source_id", [roomName, booking.room_id].filter(Boolean))
-      .gte("created_at", `${booking.check_in}T00:00:00`)
-      .lte("created_at", `${booking.check_out}T23:59:59`)
-      .neq("status", "cancelled");
+    const sel = "*, order_items(*, product:products(name, department))";
+    const [linked, legacy] = await Promise.all([
+      supabase.from("orders").select(sel).eq("booking_id", booking.id).neq("status", "cancelled"),
+      supabase.from("orders").select(sel).is("booking_id", null)
+        .eq("source_type", "room")
+        .in("source_id", [roomName, booking.room_id].filter(Boolean))
+        .gte("created_at", `${booking.check_in}T00:00:00`)
+        .lte("created_at", `${booking.check_out}T23:59:59`)
+        .neq("status", "cancelled"),
+    ]);
+    const data = [...(linked.data || []), ...(legacy.data || [])];
 
     setOrders((data as any) || []);
     setLoading(false);

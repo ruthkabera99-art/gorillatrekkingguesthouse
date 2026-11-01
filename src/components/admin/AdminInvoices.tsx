@@ -47,9 +47,9 @@ const AdminInvoices = () => {
   useEffect(() => { load(); }, []);
 
   const ordersForBooking = (bk: any) =>
-    orders.filter((o) => o.source_type === "room" && o.status !== "cancelled"
-      && [bk.room_id, bk.rooms?.name].includes(o.source_id)
-      && o.created_at.slice(0, 10) >= bk.check_in && o.created_at.slice(0, 10) <= bk.check_out);
+    orders.filter((o) => o.status !== "cancelled" && (o.booking_id === bk.id || (!o.booking_id
+      && o.source_type === "room" && [bk.room_id, bk.rooms?.name].includes(o.source_id)
+      && o.created_at.slice(0, 10) >= bk.check_in && o.created_at.slice(0, 10) <= bk.check_out)));
 
   const openInvoice = (bk: any) => {
     setSelected(bk);
