@@ -99,7 +99,7 @@ const AdminAuditLog = () => {
           (r.changed_fields || []).map((f) => `${LABEL[f] || f}: ${show(f, r.old_data?.[f])} -> ${show(f, r.new_data?.[f])}`).join("; ")])]
       : [["Date", "Status", "Booking", "Recipient", "Template", "Details"],
         ...shownSms.map((m) => [format(new Date(m.created_at), "yyyy-MM-dd HH:mm"), m.status, m.booking_id, m.recipient, m.template, m.error || m.provider_sid])];
-    const blob = new Blob([lines.map((l) => l.map(esc).join(",")).join("\n")], { type: "text/csv" });
+    const blob = new Blob(["\uFEFF" + lines.map((l) => l.map(esc).join(",")).join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `${view === "audit" ? "history" : "sms"}-report-${from}-to-${to}.csv`;
@@ -107,14 +107,15 @@ const AdminAuditLog = () => {
   };
 
   const printReport = () => {
+    const h = (v: unknown) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
     const html = `<!doctype html><html><head><title>History report</title><style>
 body{font-family:Arial,sans-serif;font-size:11px;padding:16px;color:#000}h1{font-size:16px;margin:0}table{width:100%;border-collapse:collapse;margin-top:10px}
 td,th{border:1px solid #ccc;padding:4px;text-align:left;vertical-align:top}th{background:#eee}</style></head><body>
 <h1>Gorilla Trekking Guest House — Movement History Report</h1>
 <p>${from} to ${to} · ${stats.total} entries · ${stats.created} created · ${stats.updated} changed · ${stats.deleted} deleted · Printed ${new Date().toLocaleString()}</p>
 <table><tr><th>Date</th><th>Type</th><th>What happened</th><th>Guest/Source</th><th>By</th><th>Changes</th></tr>
-${shown.map((r) => `<tr><td>${format(new Date(r.created_at), "dd MMM yyyy HH:mm")}</td><td>${TABLE[r.table_name] || r.table_name}</td><td>${describe(r)}</td><td>${who(r)}</td><td>${r.actor_role || "system"}</td><td>${(r.changed_fields || []).map((f) => `${LABEL[f] || f}: ${show(f, r.old_data?.[f])} → ${show(f, r.new_data?.[f])}`).join("<br>")}</td></tr>`).join("")}
-</table></body></html>`.replace(/<script/gi, "");
+${shown.map((r) => `<tr><td>${format(new Date(r.created_at), "dd MMM yyyy HH:mm")}</td><td>${TABLE[r.table_name] || r.table_name}</td><td>${h(describe(r))}</td><td>${h(who(r))}</td><td>${r.actor_role || "system"}</td><td>${(r.changed_fields || []).map((f) => h(`${LABEL[f] || f}: ${show(f, r.old_data?.[f])} → ${show(f, r.new_data?.[f])}`)).join("<br>")}</td></tr>`).join("")}
+</table></body></html>`;
     const f = document.createElement("iframe");
     f.style.cssText = "position:fixed;width:0;height:0;border:0";
     document.body.appendChild(f);
