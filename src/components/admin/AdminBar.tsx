@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Clock, RefreshCw, PlayCircle, CheckCircle, Truck } from "lucide-react";
+import { Clock, RefreshCw, PlayCircle, CheckCircle, Truck, Printer } from "lucide-react";
+import { printOrder } from "@/lib/printOrder";
 
 type OrderItem = {
   id: string;
@@ -45,6 +46,11 @@ const AdminBar = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
+
+  const printTicket = (item: OrderItem) => {
+    const orderItems = items.filter((i) => i.order_id === item.order_id);
+    printOrder({ ...(item.order || {}), id: item.order_id, order_items: orderItems }, "order", "bar");
+  };
 
   const updateStatus = async (id: string, status: string) => {
     const { error } = await supabase.from("order_items").update({ status } as any).eq("id", id);
@@ -91,6 +97,9 @@ const AdminBar = () => {
                   <p className="text-xs font-sans text-blue-600">🧑‍🍳 Waiter: {item.order.assigned_waiter}</p>
                 )}
                 <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => printTicket(item)} className="font-sans gap-1" aria-label="Print ticket">
+                    <Printer size={14} /> Print
+                  </Button>
                   {item.status === "pending" && (
                     <Button size="sm" onClick={() => updateStatus(item.id, "preparing")} className="flex-1 font-sans gap-1 bg-blue-600 text-white hover:bg-blue-700">
                       <PlayCircle size={14} /> Start Preparing
