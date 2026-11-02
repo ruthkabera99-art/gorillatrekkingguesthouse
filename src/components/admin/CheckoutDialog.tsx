@@ -138,6 +138,16 @@ const CheckoutDialog = ({ booking, open, onOpenChange, onCheckoutComplete, guest
       return;
     }
 
+    // Settle every food & bar order on this bill so payments match the invoice
+    const orderIds = orders.filter(o => o.payment_status !== "paid").map(o => o.id);
+    if (orderIds.length) {
+      const { error: oErr } = await supabase
+        .from("orders")
+        .update({ payment_status: "paid", booking_id: booking.id } as any)
+        .in("id", orderIds);
+      if (oErr) toast.error(`Stay closed, but orders not marked paid: ${oErr.message}`);
+    }
+
     toast.success("Guest checked out successfully!", {
       description: `Final bill: ${fmt(grandTotal)}`,
     });
