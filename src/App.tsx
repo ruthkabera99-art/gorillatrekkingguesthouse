@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { lazy, Suspense } from "react";
 import AnnouncementBanner from "@/components/landing/AnnouncementBanner";
+import ThemeApplier from "@/components/ThemeApplier";
 import WhatsAppButton from "@/components/landing/WhatsAppButton";
 import ChatWidget from "@/components/landing/ChatWidget";
 
@@ -31,6 +32,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ThemeApplier />
           <AnnouncementBanner />
           <Suspense fallback={<div className="min-h-screen bg-background" />}>
             <Routes>

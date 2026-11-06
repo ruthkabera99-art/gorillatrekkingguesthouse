@@ -13,7 +13,9 @@ import {
   Phone,
   Camera,
   Mountain,
+  Link2 as LinkIcon,
 } from "lucide-react";
+import { useSiteContent, pickText } from "@/hooks/useSiteContent";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,16 +24,17 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import CurrencySwitcher from "./CurrencySwitcher";
 
 const Navbar = () => {
-  const { t } = useTranslation();
-  const navLinks = [
-    { label: t("nav.rooms"), href: "#rooms", icon: Bed },
-    { label: t("nav.gallery"), href: "#gallery", icon: Camera },
-    { label: t("nav.trekking"), href: "#trekking", icon: Mountain },
-    { label: t("nav.amenities"), href: "#amenities", icon: Sparkles },
-    { label: t("nav.reviews"), href: "#reviews", icon: Star },
-    { label: t("nav.menu"), href: "/menu", isRoute: true, icon: UtensilsCrossed },
-    { label: t("nav.contact"), href: "#contact", icon: Phone },
-  ];
+  const { t, i18n } = useTranslation();
+  const { header } = useSiteContent();
+  const ICONS: Record<string, typeof Bed> = { rooms: Bed, gallery: Camera, trekking: Mountain, amenities: Sparkles, reviews: Star, menu: UtensilsCrossed, contact: Phone };
+  const iconFor = (href: string) => ICONS[href.replace(/^[#/]/, "")] || LinkIcon;
+  const navLinks = header.links.filter((l) => l.visible).map((l) => ({
+    label: pickText(l.label, i18n.language, l.tKey ? t(l.tKey) : l.href),
+    href: l.href,
+    isRoute: !l.href.startsWith("#"),
+    icon: iconFor(l.href),
+  }));
+  const bookLabel = pickText(header.bookLabel, i18n.language, t("nav.bookNow"));
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dark, setDark] = useState(() => {
@@ -162,14 +165,14 @@ const Navbar = () => {
             </Link>
           )}
 
-          <Link to="/rooms">
+          {header.showBookButton && <Link to={header.bookHref || "/rooms"}>
             <Button
               size="sm"
               className="bg-booking-blue text-booking-blue-foreground hover:bg-booking-blue/90 font-sans font-semibold tracking-wide rounded-xl shadow-lg transition-all duration-300 px-5"
             >
-              {t("nav.bookNow")}
+              {bookLabel}
             </Button>
-          </Link>
+          </Link>}
         </div>
 
         {/* Mobile controls */}
@@ -288,8 +291,8 @@ const Navbar = () => {
                       </Button>
                     </Link>
                   )}
-                  <Link
-                    to="/rooms"
+                  {header.showBookButton && <Link
+                    to={header.bookHref || "/rooms"}
                     onClick={() => setMobileOpen(false)}
                     className="w-full"
                   >
@@ -297,9 +300,9 @@ const Navbar = () => {
                       size="lg"
                       className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans rounded-xl shadow-lg shadow-primary/20"
                     >
-                      Book Now
+                      {bookLabel}
                     </Button>
-                  </Link>
+                  </Link>}
                 </div>
               </div>
             </motion.div>

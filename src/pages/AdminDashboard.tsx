@@ -17,7 +17,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import {
   LayoutDashboard, ShoppingCart, Receipt, BedDouble, UtensilsCrossed,
-  Settings, Users, Tag, ChefHat, Wine, LogOut, BarChart3, CalendarDays, ShieldCheck, History
+  Settings, Users, Tag, ChefHat, Wine, LogOut, BarChart3, CalendarDays, ShieldCheck, History, Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +34,7 @@ import AdminBar from "@/components/admin/AdminBar";
 import AdminBookings from "@/components/admin/AdminBookings";
 import AdminSecurity from "@/components/admin/AdminSecurity";
 import AdminAuditLog from "@/components/admin/AdminAuditLog";
+import AdminSiteContent from "@/components/admin/AdminSiteContent";
 import AdminStaff from "@/components/admin/AdminStaff";
 import { useStaffRole, ROLE_LABELS } from "@/hooks/useStaffRole";
 
@@ -51,6 +52,7 @@ const tabs = [
   { key: "staff", label: "Staff & Roles", icon: Users },
   { key: "audit", label: "Audit & SMS Log", icon: History },
   { key: "security", label: "Security", icon: ShieldCheck },
+  { key: "content", label: "Website Design", icon: Palette },
   { key: "settings", label: "Settings", icon: Settings },
 
 ];
@@ -121,6 +123,7 @@ const AdminDashboard = () => {
       case "promotions": return <AdminPromotions />;
       case "audit": return <AdminAuditLog />;
       case "security": return <AdminSecurity />;
+      case "content": return <AdminSiteContent />;
       case "settings": return <AdminSettings />;
       case "staff": return <AdminStaff />;
 

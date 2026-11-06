@@ -2,25 +2,29 @@ import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { MapPin, Star, Award } from "lucide-react";
 import BookingSearchBar from "./BookingSearchBar";
+import { useSiteContent, pickText, type LText } from "@/hooks/useSiteContent";
 
 const Hero = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { hero } = useSiteContent();
+  const L = (v: LText, key: string) => pickText(v, i18n.language, t(key));
 
   return (
     <section className="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-20 pb-32 sm:pb-40">
-      <video
+      {hero.videoUrl ? <video
+        key={hero.videoUrl}
         autoPlay
         muted
         loop
         playsInline
         className="absolute inset-0 w-full h-full object-cover scale-105"
-        poster="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&q=80"
+        poster={hero.imageUrl}
       >
         <source
-          src="https://videos.pexels.com/video-files/3773486/3773486-uhd_2560_1440_30fps.mp4"
+          src={hero.videoUrl}
           type="video/mp4"
         />
-      </video>
+      </video> : <img src={hero.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover scale-105" />}
 
       {/* Cinematic overlay layers */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/85" />
@@ -36,7 +40,7 @@ const Hero = () => {
           >
             <Award size={14} className="text-booking-yellow" />
             <span className="text-xs tracking-[0.15em] uppercase text-booking-yellow font-sans font-semibold">
-              {t("hero.badge")}
+              {L(hero.badge, "hero.badge")}
             </span>
           </motion.div>
 
@@ -46,8 +50,8 @@ const Hero = () => {
             transition={{ delay: 0.4, duration: 1, ease: "easeOut" }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-white leading-[1.05] mb-4"
           >
-            {t("hero.title1")}
-            <span className="block text-gradient-gold mt-1">{t("hero.title2")}</span>
+            {L(hero.title1, "hero.title1")}
+            <span className="block text-gradient-gold mt-1">{L(hero.title2, "hero.title2")}</span>
           </motion.h1>
 
           <motion.p
@@ -56,7 +60,7 @@ const Hero = () => {
             transition={{ delay: 0.7, duration: 0.8 }}
             className="text-base sm:text-lg text-white/85 font-sans font-light max-w-2xl mx-auto mb-5 leading-relaxed"
           >
-            {t("hero.subtitle")}
+            {L(hero.subtitle, "hero.subtitle")}
           </motion.p>
 
           <motion.div
@@ -67,23 +71,23 @@ const Hero = () => {
           >
             <span className="flex items-center gap-1.5">
               <MapPin size={14} className="text-booking-yellow" />
-              {t("hero.location")}
+              {L(hero.location, "hero.location")}
             </span>
             <span className="w-1 h-1 rounded-full bg-white/40" />
             <span className="flex items-center gap-1.5">
               <Star size={14} className="text-booking-yellow fill-booking-yellow" />
-              9.4 / 10
+              {hero.rating}
             </span>
           </motion.div>
         </div>
 
-        <motion.div
+        {hero.showSearch && <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1, duration: 0.8 }}
         >
           <BookingSearchBar variant="hero" />
-        </motion.div>
+        </motion.div>}
       </div>
     </section>
   );

@@ -13,10 +13,18 @@ import ReviewScoreCard from "@/components/landing/ReviewScoreCard";
 import Testimonials from "@/components/landing/Testimonials";
 import Contact from "@/components/landing/Contact";
 import Footer from "@/components/landing/Footer";
+import { useSiteContent } from "@/hooks/useSiteContent";
+
+const SECTIONS: Record<string, React.ComponentType> = {
+  hero: Hero, trust: TrustStrip, experience: Experience, rooms: RoomShowcase, whyBook: WhyBookDirect,
+  amenities: Amenities, gallery: Gallery, location: LocationSection, trekking: TrekkingTours,
+  reviewScore: ReviewScoreCard, testimonials: Testimonials, contact: Contact,
+};
 
 const SITE_URL = "https://gorillatrekkingguesthouse.lovable.app";
 
 const Index = () => {
+  const { sections } = useSiteContent();
   return (
     <main className="min-h-screen">
       <Helmet>
@@ -60,18 +68,10 @@ const Index = () => {
       </Helmet>
 
       <Navbar />
-      <Hero />
-      <TrustStrip />
-      <Experience />
-      <RoomShowcase />
-      <WhyBookDirect />
-      <Amenities />
-      <Gallery />
-      <LocationSection />
-      <TrekkingTours />
-      <ReviewScoreCard />
-      <Testimonials />
-      <Contact />
+      {sections.filter((x) => x.visible).map((x) => {
+        const C = SECTIONS[x.key];
+        return C ? <C key={x.key} /> : null;
+      })}
       <Footer />
     </main>
   );
