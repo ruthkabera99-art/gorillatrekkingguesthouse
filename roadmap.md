@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Finish Website Design controls, validate public rendering and save a code version
+- [ ] Verify Website Design saving as an administrator (blocked: external Supabase has no managed test session)
 - [ ] Station printing (kitchen/bar print + auto-print new tickets)
 - [ ] Test order end to end, confirm totals
 - [ ] Phone/tablet review of home, menu, rooms; fix spacing/empty sections

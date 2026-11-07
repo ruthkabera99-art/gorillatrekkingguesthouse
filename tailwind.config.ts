@@ -26,11 +26,14 @@ export default {
         gold: {
           DEFAULT: "hsl(var(--gold))",
           light: "hsl(var(--gold-light))",
+          foreground: "hsl(var(--gold-foreground))",
         },
         navy: {
           DEFAULT: "hsl(var(--navy))",
           light: "hsl(var(--navy-light))",
+          foreground: "hsl(var(--navy-foreground))",
         },
+        media: { foreground: "hsl(var(--media-foreground))", overlay: "hsl(var(--media-overlay))" },
         beige: {
           DEFAULT: "hsl(var(--beige))",
           dark: "hsl(var(--beige-dark))",

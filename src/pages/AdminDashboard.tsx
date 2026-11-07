@@ -65,7 +65,8 @@ const AdminDashboard = () => {
   const [pendingCounts, setPendingCounts] = useState<{ kitchen: number; bar: number }>({ kitchen: 0, bar: 0 });
   const visibleTabs = tabs.filter((t) => can(t.key));
   const fallbackTab = visibleTabs[0]?.key || "overview";
-  const activeTab = can(searchParams.get("tab") || "") ? searchParams.get("tab")! : fallbackTab;
+  const requestedTab = searchParams.get("tab") || "";
+  const activeTab = requestedTab && can(requestedTab) ? requestedTab : fallbackTab;
 
   useEffect(() => {
     if (!authLoading && !user) { navigate("/auth"); return; }
@@ -192,12 +193,12 @@ const AdminDashboard = () => {
           </SidebarContent>
         </Sidebar>
 
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 min-w-0 overflow-auto">
           <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border h-14 flex items-center px-6 gap-4">
             <SidebarTrigger />
             <h1 className="font-serif text-lg font-semibold text-foreground">{tabs.find((t) => t.key === activeTab)?.label}</h1>
           </header>
-          <div className="p-6">
+          <div className="p-3 sm:p-6">
             {renderContent()}
           </div>
         </main>

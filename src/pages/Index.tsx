@@ -26,7 +26,7 @@ const SITE_URL = "https://gorillatrekkingguesthouse.lovable.app";
 const Index = () => {
   const { sections } = useSiteContent();
   return (
-    <main className="min-h-screen">
+    <main className={`min-h-screen ${sections.find((x) => x.visible)?.key !== "hero" ? "pt-24" : ""}`}>
       <Helmet>
         <title>Gorilla Trekking Guest House — Musanze | Book Direct</title>
         <meta

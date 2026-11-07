@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+import { mediaHref, siteHref } from "@/lib/siteLinks";
+import { hexToHsl, SERIF_FONTS, SANS_FONTS } from "@/lib/siteTheme";
 
 export type Lang = "en" | "fr" | "es";
 export type LText = Partial<Record<Lang, string>>;
@@ -89,55 +92,113 @@ export function pickText(t: LText | undefined, lang: string, fallback = ""): str
   return (t?.[l]?.trim() || t?.en?.trim() || fallback);
 }
 
-function merge(saved: Partial<SiteContent> | undefined): SiteContent {
-  const s = saved || {};
-  const sections = (() => {
-    const list = s.sections?.length ? s.sections.filter((x) => SECTION_LABELS[x.key]) : DEFAULT_CONTENT.sections;
-    const missing = DEFAULT_CONTENT.sections.filter((d) => !list.some((x) => x.key === d.key));
-    return [...list, ...missing];
-  })();
-  return {
-    header: { ...DEFAULT_CONTENT.header, ...s.header },
-    banner: { ...DEFAULT_CONTENT.banner, ...s.banner },
-    hero: { ...DEFAULT_CONTENT.hero, ...s.hero },
-    footer: { ...DEFAULT_CONTENT.footer, ...s.footer, socials: { ...DEFAULT_CONTENT.footer.socials, ...s.footer?.socials } },
-    theme: { ...DEFAULT_CONTENT.theme, ...s.theme },
-    sections,
-  };
+const textSchema = z.object({ en: z.string().optional(), fr: z.string().optional(), es: z.string().optional() }).catch({});
+const linkSchema = z.object({ id: z.string(), label: textSchema, href: z.string(), tKey: z.string().optional() });
+
+/** Recover individual malformed settings without losing valid saved edits. */
+export function normalizeSiteContent(saved: unknown): SiteContent {
+  const defaults = DEFAULT_CONTENT;
+  const string = (v: string) => z.string().catch(v);
+  const bool = (v: boolean) => z.boolean().catch(v);
+  const schema = z.object({
+    header: z.object({
+      brandTitle: string(defaults.header.brandTitle), brandSubtitle: string(defaults.header.brandSubtitle),
+      showBookButton: bool(defaults.header.showBookButton), bookLabel: textSchema, bookHref: string(defaults.header.bookHref),
+      links: z.array(linkSchema.extend({ visible: z.boolean() })).catch(defaults.header.links),
+    }).catch(defaults.header),
+    banner: z.object({ enabled: bool(defaults.banner.enabled), text: textSchema, highlight: textSchema,
+      endDate: string(""), linkHref: string(defaults.banner.linkHref) }).catch(defaults.banner),
+    hero: z.object({ badge: textSchema, title1: textSchema, title2: textSchema, subtitle: textSchema, location: textSchema,
+      rating: string(defaults.hero.rating), imageUrl: string(defaults.hero.imageUrl), videoUrl: string(defaults.hero.videoUrl),
+      showSearch: bool(defaults.hero.showSearch) }).catch(defaults.hero),
+    footer: z.object({
+      brandTitle: string(defaults.footer.brandTitle), brandSubtitle: string(defaults.footer.brandSubtitle), tagline: textSchema,
+      copyright: string(defaults.footer.copyright), bottomNote: string(defaults.footer.bottomNote), showNewsletter: bool(defaults.footer.showNewsletter),
+      socials: z.object({ facebook: string(""), instagram: string(""), twitter: string(""), youtube: string("") }).catch(defaults.footer.socials),
+      columns: z.array(z.object({ id: z.string(), title: textSchema, tKey: z.string().optional(), links: z.array(linkSchema).catch([]) })).catch(defaults.footer.columns),
+      otaLinks: z.array(z.object({ id: z.string(), name: z.string(), href: z.string() })).catch(defaults.footer.otaLinks),
+    }).catch(defaults.footer),
+    theme: z.object({
+      primary: z.string().refine((v) => !!hexToHsl(v)).catch(defaults.theme.primary),
+      secondary: z.string().refine((v) => !!hexToHsl(v)).catch(defaults.theme.secondary),
+      button: z.string().refine((v) => !!hexToHsl(v)).catch(defaults.theme.button),
+      fontSerif: z.string().refine((v) => SERIF_FONTS.includes(v)).catch(defaults.theme.fontSerif),
+      fontSans: z.string().refine((v) => SANS_FONTS.includes(v)).catch(defaults.theme.fontSans),
+      radius: z.number().min(0).max(1.5).catch(defaults.theme.radius),
+    }).catch(defaults.theme),
+    sections: z.array(z.object({ key: z.string(), visible: z.boolean() })).catch(defaults.sections),
+  }).catch(defaults);
+  // Zod's optional-key inference on this non-strict TS project needs an
+  // explicit output type; the schema above fills every required field.
+  const result = schema.parse(saved) as SiteContent;
+  const seen = new Set<string>();
+  result.sections = result.sections.filter((item) => {
+    if (!SECTION_LABELS[item.key] || seen.has(item.key)) return false;
+    seen.add(item.key);
+    return true;
+  });
+  result.sections.push(...defaults.sections.filter((item) => !seen.has(item.key)));
+  return result;
+}
+
+export function validateSiteContent(content: SiteContent) {
+  for (const colour of [content.theme.primary, content.theme.secondary, content.theme.button]) {
+    if (!hexToHsl(colour)) throw new Error("Colours must use six-digit hex values, such as #C5A572.");
+  }
+  const links = [...content.header.links.map((l) => l.href), content.header.bookHref, content.banner.linkHref,
+    ...Object.values(content.footer.socials), ...content.footer.otaLinks.map((l) => l.href), ...content.footer.columns.flatMap((c) => c.links.map((l) => l.href))];
+  if (links.some((href) => href.trim() && href.trim() !== "#" && !siteHref(href))) {
+    throw new Error("Use a page path, #section, or a complete https:// link. Unsafe links are not allowed.");
+  }
+  if (!mediaHref(content.hero.imageUrl) || !mediaHref(content.hero.videoUrl)) throw new Error("Photo and video links must be complete web links or site paths.");
+  if (!content.hero.imageUrl.trim()) throw new Error("Choose a background photo, including when using video.");
+  if (content.banner.endDate && !Number.isFinite(new Date(content.banner.endDate).getTime())) throw new Error("Choose a valid announcement end date.");
 }
 
 let cached: SiteContent | null = null;
 const listeners = new Set<(v: SiteContent) => void>();
+let pendingFetch: Promise<SiteContent> | null = null;
+let revision = 0;
 
 export async function fetchSiteContent(): Promise<SiteContent> {
-  const { data } = await supabase.from("site_settings").select("value").eq("key", "site_content").maybeSingle();
-  const merged = merge(data?.value as Partial<SiteContent> | undefined);
-  cached = merged;
-  listeners.forEach((l) => l(merged));
-  return merged;
+  if (pendingFetch) return pendingFetch;
+  const started = revision;
+  pendingFetch = (async () => {
+    const { data, error } = await supabase.from("site_settings").select("value").eq("key", "site_content").maybeSingle();
+    if (error) throw error;
+    const merged = normalizeSiteContent(data?.value);
+    if (started !== revision && cached) return cached;
+    cached = merged;
+    listeners.forEach((l) => l(merged));
+    return merged;
+  })();
+  try { return await pendingFetch; } finally { pendingFetch = null; }
 }
 
 export async function saveSiteContent(content: SiteContent) {
-  const { data: existing } = await supabase.from("site_settings").select("id").eq("key", "site_content").maybeSingle();
+  validateSiteContent(content);
   const value = JSON.parse(JSON.stringify(content));
-  const res = existing
-    ? await supabase.from("site_settings").update({ value, updated_at: new Date().toISOString() }).eq("key", "site_content")
-    : await supabase.from("site_settings").insert({ key: "site_content", value });
-  if (res.error) throw res.error;
-  cached = content;
-  listeners.forEach((l) => l(content));
+  const { data, error } = await supabase.from("site_settings").upsert({ key: "site_content", value, updated_at: new Date().toISOString() }, { onConflict: "key" }).select("value").single();
+  if (error) throw error;
+  revision += 1;
+  cached = normalizeSiteContent(data.value);
+  listeners.forEach((l) => { if (cached) l(cached); });
 }
 
 export function useSiteContent(): SiteContent {
   const [content, setContent] = useState<SiteContent>(cached ?? DEFAULT_CONTENT);
   useEffect(() => {
     listeners.add(setContent);
-    if (!cached) fetchSiteContent(); else setContent(cached);
+    const refresh = () => { void fetchSiteContent().catch(() => undefined); };
+    if (!cached) refresh(); else setContent(cached);
     const channel = supabase
       .channel(`site-content-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "site_settings", filter: "key=eq.site_content" }, () => fetchSiteContent())
+      .on("postgres_changes", { event: "*", schema: "public", table: "site_settings", filter: "key=eq.site_content" }, refresh)
       .subscribe();
-    return () => { listeners.delete(setContent); supabase.removeChannel(channel); };
+    // Poll while visible as a fallback when realtime is not enabled on this table.
+    const poll = window.setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 30000);
+    window.addEventListener("focus", refresh);
+    return () => { listeners.delete(setContent); supabase.removeChannel(channel); window.clearInterval(poll); window.removeEventListener("focus", refresh); };
   }, []);
   return content;
 }

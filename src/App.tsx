@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { lazy, Suspense } from "react";
 import AnnouncementBanner from "@/components/landing/AnnouncementBanner";
 import ThemeApplier from "@/components/ThemeApplier";
+import HomeAnchorScroll from "@/components/HomeAnchorScroll";
 import WhatsAppButton from "@/components/landing/WhatsAppButton";
 import ChatWidget from "@/components/landing/ChatWidget";
 
@@ -33,6 +34,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <ThemeApplier />
+          <HomeAnchorScroll />
           <AnnouncementBanner />
           <Suspense fallback={<div className="min-h-screen bg-background" />}>
             <Routes>

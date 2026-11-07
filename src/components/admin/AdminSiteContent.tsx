@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,16 +8,23 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
 import { ArrowUp, ArrowDown, Trash2, Plus, Save, RotateCcw, Eye, EyeOff, Upload, ExternalLink } from "lucide-react";
 import {
   DEFAULT_CONTENT, SECTION_LABELS, fetchSiteContent, saveSiteContent, newId,
-  type SiteContent, type LText,
+  validateSiteContent, type SiteContent, type LText,
 } from "@/hooks/useSiteContent";
+import { SERIF_FONTS, SANS_FONTS, themeTokens, loadThemeFonts } from "@/lib/siteTheme";
 
 const LANGS = [["en", "English"], ["fr", "Français"], ["es", "Español"]] as const;
-const SERIF_FONTS = ["Playfair Display", "Cormorant Garamond", "Lora", "Libre Baskerville", "DM Serif Display", "Merriweather"];
-const SANS_FONTS = ["Inter", "Work Sans", "Manrope", "Nunito Sans", "Karla", "DM Sans", "Lato"];
+
+function localDateTime(value: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
 
 function move<T>(list: T[], i: number, dir: -1 | 1): T[] {
   const j = i + dir;
@@ -35,6 +42,7 @@ const LField = ({ label, value, onChange, multiline, hint }: { label: string; va
       {LANGS.map(([code, name]) => {
         const props = {
           value: value?.[code] ?? "",
+          "aria-label": `${label} — ${name}`,
           placeholder: `${name}${hint ? ` — ${hint}` : ""}`,
           onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange({ ...value, [code]: e.target.value }),
         };
@@ -62,9 +70,24 @@ const AdminSiteContent = () => {
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const photoInput = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { fetchSiteContent().then(setC); }, []);
+  const load = () => {
+    setLoadError("");
+    void fetchSiteContent().then(setC).catch((e) => setLoadError(e.message || "Could not load website settings."));
+  };
+  useEffect(load, []);
+  useEffect(() => {
+    if (c) loadThemeFonts(c.theme, "site-draft-fonts");
+  }, [c?.theme.fontSerif, c?.theme.fontSans]);
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
+  if (loadError) return <div role="alert" className="space-y-3 p-6"><p className="text-destructive">{loadError}</p><Button onClick={load}>Try again</Button></div>;
   if (!c) return <div className="p-8 text-muted-foreground">Loading…</div>;
 
   const update = <K extends keyof SiteContent>(key: K, patch: Partial<SiteContent[K]> | SiteContent[K]) => {
@@ -75,6 +98,7 @@ const AdminSiteContent = () => {
   const save = async () => {
     setSaving(true);
     try {
+      validateSiteContent(c);
       await saveSiteContent(c);
       setDirty(false);
       toast.success("Website updated — visitors see the changes now");
@@ -89,15 +113,18 @@ const AdminSiteContent = () => {
   };
 
   const uploadHero = async (file: File) => {
+    if (!/^image\/(jpeg|png|webp|avif|gif)$/.test(file.type)) { toast.error("Choose a JPG, PNG, WebP, AVIF or GIF photo."); return; }
     if (file.size > 5 * 1024 * 1024) { toast.error("Photo must be under 5 MB"); return; }
     setUploading(true);
-    const path = `site/hero-${Date.now()}.${file.name.split(".").pop()}`;
-    const { error } = await supabase.storage.from("room-images").upload(path, file);
-    if (error) { toast.error(`Upload failed: ${error.message}`); setUploading(false); return; }
-    const { data } = supabase.storage.from("room-images").getPublicUrl(path);
-    update("hero", { imageUrl: data.publicUrl });
-    setUploading(false);
-    toast.success("Photo uploaded — press Save to publish it");
+    try {
+      const path = `site/hero-${crypto.randomUUID()}.${file.type.split("/")[1]}`;
+      const { error } = await supabase.storage.from("room-images").upload(path, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from("room-images").getPublicUrl(path);
+      update("hero", { imageUrl: data.publicUrl });
+      toast.success("Photo uploaded — press Save to use it");
+    } catch (e) { toast.error(`Upload failed: ${(e as Error).message}`); }
+    finally { setUploading(false); }
   };
 
   const { header, banner, hero, footer, theme, sections } = c;
@@ -107,14 +134,15 @@ const AdminSiteContent = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-serif font-bold">Website Design</h2>
-          <p className="text-sm text-muted-foreground">Edit the header menu, banner, hero, footer, colours and home page sections. Empty language boxes use the built-in text.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" asChild><a href="/" target="_blank" rel="noreferrer"><ExternalLink size={16} className="mr-2" />View site</a></Button>
-          <Button onClick={save} disabled={saving || !dirty}><Save size={16} className="mr-2" />{saving ? "Saving…" : dirty ? "Save changes" : "Saved"}</Button>
+          <Button variant="ghost" disabled={!dirty || saving || uploading} onClick={() => { if (confirm("Discard unsaved changes?")) { setDirty(false); load(); } }}><RotateCcw size={16} className="mr-1" />Discard</Button>
+          <Button onClick={save} disabled={saving || uploading || !dirty}><Save size={16} className="mr-2" />{saving ? "Saving…" : dirty ? "Save changes" : "Saved"}</Button>
         </div>
       </div>
 
+      <fieldset disabled={saving || uploading} className="min-w-0">
       <Tabs defaultValue="header">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="header">Header menu</TabsTrigger>
@@ -140,7 +168,7 @@ const AdminSiteContent = () => {
               <div className="space-y-3">
                 {header.links.map((l, i) => (
                   <div key={l.id} className={`rounded-lg border p-3 space-y-2 ${l.visible ? "" : "opacity-60"}`}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Input className="max-w-[220px]" value={l.href} placeholder="#section or /page or https://…"
                         onChange={(e) => update("header", { links: header.links.map((x) => x.id === l.id ? { ...x, href: e.target.value } : x) })} />
                       <Button type="button" size="sm" variant="ghost" onClick={() => update("header", { links: header.links.map((x) => x.id === l.id ? { ...x, visible: !x.visible } : x) })}>
@@ -184,8 +212,11 @@ const AdminSiteContent = () => {
               <div className="grid gap-3 md:grid-cols-2">
                 <div>
                   <Label>Offer ends (countdown — leave empty for none)</Label>
-                  <Input type="datetime-local" value={banner.endDate ? banner.endDate.slice(0, 16) : ""}
-                    onChange={(e) => update("banner", { endDate: e.target.value ? new Date(e.target.value).toISOString() : "" })} />
+                  <Input type="datetime-local" aria-label="Offer ends" value={localDateTime(banner.endDate)}
+                    onChange={(e) => {
+                      const date = e.target.value ? new Date(e.target.value) : null;
+                      update("banner", { endDate: date && Number.isFinite(date.getTime()) ? date.toISOString() : "" });
+                    }} />
                   <p className="text-xs text-muted-foreground mt-1">The banner hides itself automatically after this time.</p>
                 </div>
                 <div><Label>Clicking the banner goes to</Label><Input value={banner.linkHref} placeholder="/rooms" onChange={(e) => update("banner", { linkHref: e.target.value })} /></div>
@@ -208,11 +239,8 @@ const AdminSiteContent = () => {
                 </div>
                 <div className="space-y-3">
                   <div><Label>Background photo link</Label><Input value={hero.imageUrl} onChange={(e) => update("hero", { imageUrl: e.target.value })} /></div>
-                  <Button variant="outline" size="sm" asChild disabled={uploading}>
-                    <label className="cursor-pointer"><Upload size={14} className="mr-1" />{uploading ? "Uploading…" : "Upload photo"}
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadHero(e.target.files[0])} />
-                    </label>
-                  </Button>
+                  <Button variant="outline" size="sm" disabled={uploading} onClick={() => photoInput.current?.click()}><Upload size={14} className="mr-1" />{uploading ? "Uploading…" : "Upload photo"}</Button>
+                  <input ref={photoInput} type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" className="hidden" aria-label="Hero photo" onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadHero(file); e.target.value = ""; }} />
                   <div><Label>Background video link (.mp4 — leave empty to show only the photo)</Label><Input value={hero.videoUrl} onChange={(e) => update("hero", { videoUrl: e.target.value })} /></div>
                 </div>
               </div>
@@ -259,8 +287,8 @@ const AdminSiteContent = () => {
                   const setCol = (patch: Partial<typeof col>) => update("footer", { columns: footer.columns.map((x) => x.id === col.id ? { ...x, ...patch } : x) });
                   return (
                     <div key={col.id} className="rounded-lg border p-3 space-y-3">
-                      <div className="flex items-start gap-2">
-                        <div className="flex-1"><LField label={`Column ${ci + 1} title`} value={col.title} hint={col.tKey ? "built-in" : undefined} onChange={(v) => setCol({ title: v })} /></div>
+                      <div className="flex flex-wrap items-start gap-2">
+                        <div className="flex-1 min-w-0"><LField label={`Column ${ci + 1} title`} value={col.title} hint={col.tKey ? "built-in" : undefined} onChange={(v) => setCol({ title: v })} /></div>
                         <RowButtons
                           onUp={() => update("footer", { columns: move(footer.columns, ci, -1) })}
                           onDown={() => update("footer", { columns: move(footer.columns, ci, 1) })}
@@ -269,7 +297,7 @@ const AdminSiteContent = () => {
                       </div>
                       {col.links.map((l, li) => (
                         <div key={l.id} className="pl-3 border-l-2 space-y-2">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Input className="max-w-[260px]" value={l.href} placeholder="/page, #section or https://…"
                               onChange={(e) => setCol({ links: col.links.map((x) => x.id === l.id ? { ...x, href: e.target.value } : x) })} />
                             <div className="flex-1" />
@@ -292,7 +320,7 @@ const AdminSiteContent = () => {
               <div className="space-y-2">
                 <Label>"Find us on" booking sites</Label>
                 {footer.otaLinks.map((o, i) => (
-                  <div key={o.id} className="flex gap-2">
+                  <div key={o.id} className="flex flex-wrap sm:flex-nowrap gap-2">
                     <Input className="max-w-[180px]" value={o.name} placeholder="Name" onChange={(e) => update("footer", { otaLinks: footer.otaLinks.map((x) => x.id === o.id ? { ...x, name: e.target.value } : x) })} />
                     <Input value={o.href} placeholder="Listing link (https://…)" onChange={(e) => update("footer", { otaLinks: footer.otaLinks.map((x) => x.id === o.id ? { ...x, href: e.target.value } : x) })} />
                     <RowButtons
@@ -309,7 +337,7 @@ const AdminSiteContent = () => {
                 <div><Label>Copyright name</Label><Input value={footer.copyright} onChange={(e) => update("footer", { copyright: e.target.value })} /></div>
                 <div><Label>Bottom note</Label><Input value={footer.bottomNote} onChange={(e) => update("footer", { bottomNote: e.target.value })} /></div>
               </div>
-              <div className="flex items-center gap-3"><Switch checked={footer.showNewsletter} onCheckedChange={(v) => update("footer", { showNewsletter: v })} /><Label>Show newsletter box</Label></div>
+              <div className="flex items-center gap-3"><Switch checked={footer.showNewsletter} onCheckedChange={(v) => update("footer", { showNewsletter: v })} /><Label>Show newsletter email request</Label></div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -350,16 +378,15 @@ const AdminSiteContent = () => {
                 </div>
                 <div>
                   <Label>Corner roundness: {theme.radius.toFixed(2)}</Label>
-                  <input type="range" min={0} max={1.5} step={0.05} value={theme.radius} onChange={(e) => update("theme", { radius: Number(e.target.value) })} className="w-full mt-3 accent-primary" />
+                  <Slider min={0} max={1.5} step={0.05} value={[theme.radius]} onValueChange={([value]) => update("theme", { radius: value })} className="w-full mt-3" aria-label="Corner roundness" />
                 </div>
               </div>
-              <div className="rounded-xl border p-5 space-y-3" style={{ fontFamily: `"${theme.fontSans}"` }}>
-                <p className="text-xs uppercase text-muted-foreground">Preview (after saving, the whole site updates)</p>
-                <h3 className="text-2xl font-bold" style={{ fontFamily: `"${theme.fontSerif}"`, color: theme.primary }}>Gorilla Trekking Guest House</h3>
+              <div className="rounded-lg border p-5 space-y-3 font-sans" style={themeTokens(theme)}>
+                <h3 className="text-2xl font-bold font-serif text-primary">{header.brandTitle} {header.brandSubtitle}</h3>
                 <p className="text-sm">Authentic Rwandan hospitality near Volcanoes National Park.</p>
                 <div className="flex gap-2">
-                  <span className="px-4 py-2 text-sm font-semibold" style={{ background: theme.button, color: "#fff", borderRadius: `${theme.radius}rem` }}>Book Now</span>
-                  <span className="px-4 py-2 text-sm" style={{ background: theme.secondary, color: "#fff", borderRadius: `${theme.radius}rem` }}>Footer colour</span>
+                  <span className="px-4 py-2 text-sm font-semibold bg-booking-blue text-booking-blue-foreground rounded-lg">Book Now</span>
+                  <span className="px-4 py-2 text-sm bg-navy text-navy-foreground rounded-lg">Footer colour</span>
                 </div>
               </div>
             </CardContent>
@@ -387,10 +414,11 @@ const AdminSiteContent = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      </fieldset>
 
       {dirty && (
         <div className="sticky bottom-4 flex justify-end">
-          <Button size="lg" onClick={save} disabled={saving} className="shadow-xl"><Save size={16} className="mr-2" />{saving ? "Saving…" : "Save changes"}</Button>
+          <Button size="lg" onClick={save} disabled={saving || uploading} className="shadow-xl"><Save size={16} className="mr-2" />{saving ? "Saving…" : "Save changes"}</Button>
         </div>
       )}
     </div>
