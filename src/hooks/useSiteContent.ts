@@ -175,14 +175,32 @@ export async function fetchSiteContent(): Promise<SiteContent> {
   try { return await pendingFetch; } finally { pendingFetch = null; }
 }
 
-export async function saveSiteContent(content: SiteContent) {
+export async function saveSiteContent(content: SiteContent, expectedUserId: string): Promise<SiteContent> {
   validateSiteContent(content);
+  if (!expectedUserId) throw new Error("Sign in as an administrator before saving. Your edits have not been saved.");
+  // Validate against Auth, not a cached session or a browser-stored role.
+  let identity = await supabase.auth.getUser();
+  if (identity.error?.status === 401 || identity.error?.code === "jwt_expired") {
+    const refreshed = await supabase.auth.refreshSession();
+    if (refreshed.error) throw new Error("Your sign-in has expired. Sign in again before saving. Your edits have not been saved.");
+    identity = await supabase.auth.getUser();
+  }
+  if (identity.error) throw new Error("Could not verify your sign-in. Check your connection and try again. Your edits have not been saved.");
+  if (!identity.data.user || identity.data.user.id !== expectedUserId) {
+    throw new Error("Your signed-in account changed. Sign in again before saving. Your edits have not been saved.");
+  }
   const value = JSON.parse(JSON.stringify(content));
+  // The shared client attaches the current user's token; site_settings RLS
+  // remains the authority for administrator-only writes.
   const { data, error } = await supabase.from("site_settings").upsert({ key: "site_content", value, updated_at: new Date().toISOString() }, { onConflict: "key" }).select("value").single();
+  if (error?.code === "42501") throw new Error("Only an administrator can save website changes. Your edits have not been saved.");
   if (error) throw error;
+  if (!data?.value) throw new Error("The save was not confirmed. Please try again. Your edits have not been saved.");
+  const saved = normalizeSiteContent(data.value);
   revision += 1;
-  cached = normalizeSiteContent(data.value);
-  listeners.forEach((l) => { if (cached) l(cached); });
+  cached = saved;
+  listeners.forEach((l) => l(saved));
+  return saved;
 }
 
 export function useSiteContent(): SiteContent {

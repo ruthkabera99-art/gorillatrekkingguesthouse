@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -66,6 +67,7 @@ const RowButtons = ({ onUp, onDown, onDelete }: { onUp: () => void; onDown: () =
 );
 
 const AdminSiteContent = () => {
+  const { user, loading: authLoading } = useAuth();
   const [c, setC] = useState<SiteContent | null>(null);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -77,7 +79,15 @@ const AdminSiteContent = () => {
     setLoadError("");
     void fetchSiteContent().then(setC).catch((e) => setLoadError(e.message || "Could not load website settings."));
   };
-  useEffect(load, []);
+  useEffect(() => {
+    if (authLoading || !user) return;
+    let active = true;
+    setLoadError("");
+    void fetchSiteContent().then((saved) => {
+      if (active) { setC(saved); setDirty(false); }
+    }).catch((e) => { if (active) setLoadError(e.message || "Could not load website settings."); });
+    return () => { active = false; };
+  }, [authLoading, user?.id]);
   useEffect(() => {
     if (c) loadThemeFonts(c.theme, "site-draft-fonts");
   }, [c?.theme.fontSerif, c?.theme.fontSans]);
@@ -96,10 +106,15 @@ const AdminSiteContent = () => {
   };
 
   const save = async () => {
+    if (saving || authLoading || !user) {
+      if (!user && !authLoading) toast.error("Sign in as an administrator before saving. Your edits have not been saved.");
+      return;
+    }
     setSaving(true);
     try {
       validateSiteContent(c);
-      await saveSiteContent(c);
+      const saved = await saveSiteContent(c, user.id);
+      setC(saved);
       setDirty(false);
       toast.success("Website updated — visitors see the changes now");
     } catch (e) {
