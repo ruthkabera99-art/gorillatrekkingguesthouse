@@ -24,6 +24,7 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import CurrencySwitcher from "./CurrencySwitcher";
 import SiteLink from "@/components/SiteLink";
 import { siteHref } from "@/lib/siteLinks";
+import { useStaffRole } from "@/hooks/useStaffRole";
 
 const Navbar = () => {
   const { t, i18n } = useTranslation();
@@ -44,6 +45,9 @@ const Navbar = () => {
     return saved ? saved === "dark" : true;
   });
   const { user } = useAuth();
+  const { isStaff, isAdmin } = useStaffRole();
+  const accountHref = isStaff ? "/admin" : "/dashboard";
+  const accountLabel = isAdmin ? "Admin Panel" : isStaff ? "Staff Panel" : t("nav.dashboard");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -129,14 +133,14 @@ const Navbar = () => {
           </Button>
 
           {user ? (
-            <Link to="/dashboard">
+            <Link to={accountHref}>
               <Button
                 size="sm"
                 variant="outline"
                 className="font-sans tracking-wide gap-2 rounded-xl border-border/60 hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
               >
                 <User size={15} />
-                {t("nav.dashboard")}
+                {accountLabel}
               </Button>
             </Link>
           ) : (
@@ -240,7 +244,7 @@ const Navbar = () => {
                 <div className="border-t border-border/50 mt-3 pt-3 flex flex-col gap-2">
                   {user ? (
                     <Link
-                      to="/dashboard"
+                      to={accountHref}
                       onClick={() => setMobileOpen(false)}
                       className="w-full"
                     >
@@ -250,7 +254,7 @@ const Navbar = () => {
                         className="w-full font-sans gap-2 rounded-xl border-border/60"
                       >
                         <User size={16} />
-                        Dashboard
+                        {accountLabel}
                       </Button>
                     </Link>
                   ) : (

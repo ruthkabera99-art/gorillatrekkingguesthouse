@@ -61,7 +61,7 @@ const AdminDashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { role, isAdmin, can, loading: roleLoading } = useStaffRole();
+  const { role, isAdmin, can, loading: roleLoading, error: accessError, retry } = useStaffRole();
   const [pendingCounts, setPendingCounts] = useState<{ kitchen: number; bar: number }>({ kitchen: 0, bar: 0 });
   const visibleTabs = tabs.filter((t) => can(t.key));
   const fallbackTab = visibleTabs[0]?.key || "overview";
@@ -69,12 +69,13 @@ const AdminDashboard = () => {
   const activeTab = requestedTab && can(requestedTab) ? requestedTab : fallbackTab;
 
   useEffect(() => {
-    if (!authLoading && !user) { navigate("/auth"); return; }
-    if (!roleLoading && user && !role) navigate("/dashboard");
-  }, [user, authLoading, role, roleLoading, navigate]);
+    if (!authLoading && !user) { navigate("/auth", { replace: true }); return; }
+    if (!roleLoading && !accessError && user && !role) navigate("/dashboard", { replace: true });
+  }, [user, authLoading, role, roleLoading, accessError, navigate]);
 
   // Real-time pending counts for kitchen & bar
   useEffect(() => {
+    if (!user || roleLoading || !role || accessError) return;
     const fetchCounts = async () => {
       const [kitchenRes, barRes] = await Promise.all([
         supabase.from("order_items").select("id", { count: "exact", head: true }).eq("department", "kitchen").eq("status", "pending"),
@@ -93,7 +94,7 @@ const AdminDashboard = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [user?.id, roleLoading, role, accessError]);
 
   if (authLoading || roleLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -101,6 +102,7 @@ const AdminDashboard = () => {
     </div>
   );
 
+  if (accessError) return <div role="alert" className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background p-6"><p className="text-destructive">{accessError}</p><Button onClick={retry}>Try again</Button><Button variant="outline" onClick={() => navigate("/dashboard")}>My account</Button></div>;
   if (!role) return null;
 
   const setTab = (key: string) => setSearchParams({ tab: key });
@@ -128,7 +130,7 @@ const AdminDashboard = () => {
       case "settings": return <AdminSettings />;
       case "staff": return <AdminStaff />;
 
-      default: return can("overview") ? <AdminOverview /> : null;
+      default: return can("overview") ? <AdminOverview /> : <p className="text-muted-foreground">No pages are assigned to your role. Ask an administrator to review your page access.</p>;
     }
   };
 

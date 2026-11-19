@@ -10,8 +10,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { UserPlus, Search, Loader2, Save, KeyRound, Ban, CheckCircle2, Trash2 } from "lucide-react";
+import { UserPlus, Search, Loader2, Save, KeyRound, Ban, CheckCircle2, Trash2, RefreshCw } from "lucide-react";
 import { ROLE_LABELS, ADMIN_ONLY_TABS } from "@/hooks/useStaffRole";
+import { invokeAdminFunction, setStaffRole, verifyAdminSession } from "@/lib/adminRequest";
+import { primaryStaffRole } from "@/lib/staffAccess";
 
 const ASSIGNABLE = ["admin", "waiter", "kitchen", "bar", "receptionist", "user"];
 const PERM_ROLES = ["waiter", "kitchen", "bar", "receptionist"];
@@ -25,19 +27,15 @@ const PAGES: { key: string; label: string }[] = [
 type StaffUser = { user_id: string; email: string; phone: string; full_name: string; roles: string[]; banned_until: string | null; created_at: string };
 
 const call = async (body: any) => {
-  const { data, error } = await supabase.functions.invoke("admin-manage-staff", { body });
-  if (error || data?.error) {
-    let msg = data?.error || error?.message;
-    try { msg = (await (error as any)?.context?.json())?.error || msg; } catch { /* ignore */ }
-    throw new Error(msg);
-  }
-  return data;
+  if (body.action === "set_role") return setStaffRole(body.user_id, body.role);
+  return invokeAdminFunction("admin-manage-staff", body);
 };
 
 const AdminStaff = () => {
   const { user } = useAuth();
   const [users, setUsers] = useState<StaffUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("staff");
   const [busy, setBusy] = useState<string | null>(null);
@@ -50,22 +48,26 @@ const AdminStaff = () => {
 
   const load = async () => {
     setLoading(true);
-    const [{ data, error }, { data: p }] = await Promise.all([
-      supabase.functions.invoke("admin-list-users"),
-      (supabase as any).from("role_permissions").select("role, tabs"),
-    ]);
-    if (error) toast.error("Couldn't load staff list");
-    setUsers(data?.users || []);
-    setPerms(Object.fromEntries((p || []).map((r: any) => [r.role, r.tabs || []])));
-    setLoading(false);
+    setLoadError("");
+    try {
+      const [data, permissions] = await Promise.all([
+        invokeAdminFunction<{ users: StaffUser[] }>("admin-list-users"),
+        supabase.from("role_permissions").select("role, tabs"),
+      ]);
+      if (permissions.error) throw permissions.error;
+      if (!Array.isArray(data?.users)) throw new Error("The staff list could not be loaded. Please retry.");
+      setUsers(data.users);
+      setPerms(Object.fromEntries((permissions.data || []).map((row) => [row.role, row.tabs || []])));
+    } catch (e) { setLoadError(e instanceof Error ? e.message : "Could not load staff. Please retry."); }
+    finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);
 
   const run = async (id: string, body: any, ok: string) => {
     setBusy(id);
-    try { await call(body); toast.success(ok); await load(); }
-    catch (e: any) { toast.error(e.message); }
-    setBusy(null);
+    try { await call(body); toast.success(ok); await load(); return true; }
+    catch (e: any) { toast.error(e.message); return false; }
+    finally { setBusy(null); }
   };
 
   const createStaff = async () => {
@@ -90,13 +92,20 @@ const AdminStaff = () => {
 
   const savePerms = async () => {
     setSavingPerms(true);
-    const rows = PERM_ROLES.map((role) => ({ role, tabs: (perms[role] || []).filter((t) => !ADMIN_ONLY_TABS.includes(t)) }));
-    const { error } = await (supabase as any).from("role_permissions").upsert(rows, { onConflict: "role" });
-    setSavingPerms(false);
-    if (error) toast.error(error.message); else toast.success("Page access saved — staff see it on their next page load");
+    try {
+      await verifyAdminSession(user?.id);
+      const rows = PERM_ROLES.map((role) => ({ role: role as "waiter" | "kitchen" | "bar" | "receptionist", tabs: (perms[role] || []).filter((t) => !ADMIN_ONLY_TABS.includes(t)) }));
+      const { data, error } = await supabase.from("role_permissions").upsert(rows, { onConflict: "role" }).select("role, tabs");
+      if (error) throw error;
+      if (data?.length !== PERM_ROLES.length) throw new Error("Page access save was not confirmed. Please retry.");
+      setPerms(Object.fromEntries(data.map((row) => [row.role, row.tabs])));
+      window.dispatchEvent(new Event("staff-access-changed"));
+      toast.success("Page access saved");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not save page access"); }
+    finally { setSavingPerms(false); }
   };
 
-  const roleOf = (u: StaffUser) => u.roles.includes("admin") ? "admin" : u.roles.find((r) => r !== "user") || "user";
+  const roleOf = (u: StaffUser) => primaryStaffRole(u.roles) || "user";
   const shown = users.filter((u) => {
     const r = roleOf(u);
     if (roleFilter === "staff" && r === "user") return false;
@@ -115,7 +124,7 @@ const AdminStaff = () => {
             <CardTitle className="font-serif">Staff accounts</CardTitle>
             <CardDescription className="font-sans">Add staff, change their role, reset passwords, or turn accounts off.</CardDescription>
           </div>
-          <Button className="font-sans gap-2" onClick={() => setAddOpen(true)}><UserPlus size={16} />Add staff</Button>
+          <div className="flex gap-2"><Button variant="outline" size="icon" aria-label="Refresh staff" onClick={load} disabled={loading}><RefreshCw size={16} /></Button><Button className="font-sans gap-2" disabled={loading || !!loadError} onClick={() => setAddOpen(true)}><UserPlus size={16} />Add staff</Button></div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2 flex-wrap">
@@ -133,7 +142,7 @@ const AdminStaff = () => {
             </Select>
           </div>
 
-          {loading ? (
+          {loadError ? <div role="alert" className="space-y-3"><p className="text-destructive">{loadError}</p><Button onClick={load}>Try again</Button></div> : loading ? (
             <div className="flex justify-center py-8"><Loader2 className="animate-spin text-primary" /></div>
           ) : shown.length === 0 ? (
             <p className="text-center text-muted-foreground font-sans py-8">No accounts match.</p>
@@ -182,7 +191,7 @@ const AdminStaff = () => {
       <Card>
         <CardHeader>
           <CardTitle className="font-serif">Page access by role</CardTitle>
-          <CardDescription className="font-sans">Tick which pages each role can open. Admins can open everything. Staff, Settings, Security and Audit stay admin-only.</CardDescription>
+          <CardDescription className="font-sans">Admins can open everything. Staff, Settings, Website Design, Security and Audit stay admin-only.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="overflow-x-auto">
@@ -199,7 +208,7 @@ const AdminStaff = () => {
                     <td className="py-2 pr-4 text-foreground">{p.label}</td>
                     {PERM_ROLES.map((r) => (
                       <td key={r} className="py-2 px-2 text-center">
-                        <Checkbox checked={(perms[r] || []).includes(p.key)} onCheckedChange={() => togglePerm(r, p.key)} aria-label={`${ROLE_LABELS[r]} can open ${p.label}`} />
+                        <Checkbox disabled={loading || !!loadError || savingPerms} checked={(perms[r] || []).includes(p.key)} onCheckedChange={() => togglePerm(r, p.key)} aria-label={`${ROLE_LABELS[r]} can open ${p.label}`} />
                       </td>
                     ))}
                   </tr>
@@ -210,7 +219,7 @@ const AdminStaff = () => {
           <p className="text-xs text-muted-foreground font-sans">
             What each role can change is also protected on the server: waiters only handle their own orders, Kitchen only food, Bar only drinks, Receptionist bookings and billing.
           </p>
-          <Button onClick={savePerms} disabled={savingPerms} className="font-sans gap-2">
+          <Button onClick={savePerms} disabled={savingPerms || loading || !!loadError} className="font-sans gap-2">
             {savingPerms ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}Save page access
           </Button>
         </CardContent>
@@ -223,7 +232,7 @@ const AdminStaff = () => {
             <div><Label>Full name</Label><Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="e.g. Jean Bosco" /></div>
             <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="optional if phone given" /></div>
             <div><Label>Phone / WhatsApp</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="e.g. 0788123456" /></div>
-            <div><Label>Password (min 8)</Label><Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>
+            <div><Label>Password (min 8)</Label><Input type="password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>
             <div><Label>Role</Label>
               <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -242,11 +251,11 @@ const AdminStaff = () => {
       <Dialog open={!!pwDialog} onOpenChange={(o) => !o && setPwDialog(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader><DialogTitle className="font-serif">New password for {pwDialog?.name || "staff"}</DialogTitle></DialogHeader>
-          <Input type="text" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="At least 8 characters" className="font-sans" />
+          <Input type="password" autoComplete="new-password" value={newPw} onChange={(e) => setNewPw(e.target.value)} placeholder="At least 8 characters" className="font-sans" />
           <DialogFooter>
             <Button variant="outline" onClick={() => setPwDialog(null)}>Cancel</Button>
             <Button disabled={newPw.length < 8 || busy === pwDialog?.id}
-              onClick={async () => { const id = pwDialog!.id; await run(id, { action: "reset_password", user_id: id, password: newPw }, "Password updated"); setPwDialog(null); }}>Save</Button>
+              onClick={async () => { if (!pwDialog) return; const ok = await run(pwDialog.id, { action: "reset_password", user_id: pwDialog.id, password: newPw }, "Password updated"); if (ok) { setPwDialog(null); setNewPw(""); } }}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

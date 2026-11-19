@@ -27,15 +27,17 @@ const statusColors: Record<string, string> = {
 const AdminKitchen = () => {
   const [items, setItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const fetchItems = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("order_items")
       .select("*, product:products(name, category), order:orders(source_type, source_id, created_at, guest_name, assigned_waiter)")
       .eq("department", "kitchen")
       .in("status", ["pending", "preparing", "ready"])
       .order("created_at", { ascending: true });
-    setItems((data as any) || []);
+    setLoadError(error ? "Could not load kitchen orders. Please try again." : "");
+    if (!error) setItems((data as any) || []);
     setLoading(false);
   };
 
@@ -72,7 +74,7 @@ const AdminKitchen = () => {
         <Button variant="outline" size="sm" onClick={fetchItems} className="font-sans gap-1"><RefreshCw size={14} />Refresh</Button>
       </div>
 
-      {loading ? (
+      {loadError ? <div role="alert" className="space-y-3"><p className="text-destructive">{loadError}</p><Button onClick={fetchItems}>Try again</Button></div> : loading ? (
         <div className="flex justify-center py-12"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
       ) : items.length === 0 ? (
         <p className="text-center text-muted-foreground font-sans py-12">No active food orders right now 🍽️</p>

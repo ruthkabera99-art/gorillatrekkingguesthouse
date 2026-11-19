@@ -1,4 +1,7 @@
 # Roadmap
+- [ ] Repair administrator access and permission loading
+- [ ] Align Staff & Roles and Settings account management, with safe errors and retries
+- [ ] Verify administrator website saves and shared control access
 - [x] Finish Website Design controls, validate public rendering and save a code version
 - [x] Connect Website Design saves to the signed-in administrator session and test reload persistence with automated tests
 - [ ] Verify Website Design saving as an administrator (blocked: external Supabase has no managed test session)

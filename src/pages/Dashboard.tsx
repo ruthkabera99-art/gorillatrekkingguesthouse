@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { useStaffRole } from "@/hooks/useStaffRole";
 
 const extraServices = [
   { icon: UtensilsCrossed, label: "Room Service", desc: "Order food & drinks to your room", link: "/menu?source=room" },
@@ -25,6 +26,10 @@ const extraServices = [
 const Dashboard = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { isStaff, can, loading: roleLoading, error: accessError, retry } = useStaffRole();
+  useEffect(() => {
+    if (!roleLoading && isStaff) navigate("/admin", { replace: true });
+  }, [roleLoading, isStaff, navigate]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -93,7 +98,7 @@ const Dashboard = () => {
     return Math.max(0, Math.ceil((checkout.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
   };
 
-  if (authLoading || loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  if (authLoading || loading || roleLoading || isStaff) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
     <div className="min-h-screen bg-background">
@@ -182,7 +187,7 @@ const Dashboard = () => {
 
                   if (isLink) {
                     return (
-                      <Link key={svc.label} to={svc.link!}>
+                      <Link key={svc.label} to={svc.link || "/menu"}>
                         <Card className="h-full bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group">
                           <CardContent className="p-3 text-center">
                             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2 group-hover:bg-primary/20 transition-colors">
@@ -199,7 +204,7 @@ const Dashboard = () => {
                   return (
                     <Card
                       key={svc.label}
-                      onClick={() => !isLoading && handleServiceRequest(svc.action!, svc.label)}
+                      onClick={() => { if (!isLoading && svc.action) void handleServiceRequest(svc.action, svc.label); }}
                       className={`h-full bg-card border border-border hover:border-primary/30 hover:shadow-md transition-all cursor-pointer group ${isLoading ? "opacity-60 pointer-events-none" : ""}`}
                     >
                       <CardContent className="p-3 text-center">
@@ -260,23 +265,27 @@ const Dashboard = () => {
         )}
 
         {/* Staff Quick Actions */}
+        {accessError && <div role="alert" className="mb-6 flex flex-wrap items-center gap-3"><p className="text-destructive">{accessError}</p><Button onClick={retry}>Retry staff access</Button><Button asChild variant="outline"><Link to="/admin">Admin Panel</Link></Button></div>}
+        {isStaff &&
         <div className="flex flex-wrap gap-2 mb-8">
+          {can("kitchen") &&
           <Link to="/kitchen">
             <Button variant="outline" size="sm" className="font-sans gap-2">
               <ChefHat size={14} /> Kitchen
             </Button>
-          </Link>
+          </Link>}
+          {can("bar") &&
           <Link to="/bar">
             <Button variant="outline" size="sm" className="font-sans gap-2">
               <Wine size={14} /> Bar
             </Button>
-          </Link>
+          </Link>}
           <Link to="/admin">
             <Button variant="outline" size="sm" className="font-sans gap-2">
               <Shield size={14} /> Admin
             </Button>
           </Link>
-        </div>
+        </div>}
 
         {/* Bookings */}
         <h2 className="font-serif text-xl font-semibold text-foreground mb-4">My Bookings</h2>

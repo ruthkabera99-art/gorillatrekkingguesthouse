@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Eye, EyeOff, ArrowLeft, Phone, Mail } from "lucide-react";
+import { useStaffRole } from "@/hooks/useStaffRole";
 
 type SignupMethod = "email" | "whatsapp";
 
@@ -22,11 +23,16 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, signUpWithPhone, signInWithPhone } = useAuth();
   const navigate = useNavigate();
+  const { isStaff, loading: roleLoading } = useStaffRole();
+  const [loginSucceeded, setLoginSucceeded] = useState(false);
+  useEffect(() => {
+    if (loginSucceeded && !roleLoading) navigate(isStaff ? "/admin" : "/dashboard", { replace: true });
+  }, [loginSucceeded, roleLoading, isStaff, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    try {
     if (isLogin) {
       // Login: detect if input is phone or email
       const isPhoneLogin = !email.includes("@");
@@ -38,7 +44,7 @@ const Auth = () => {
         toast.error(error.message);
       } else {
         toast.success("Welcome back!");
-        navigate("/");
+        setLoginSucceeded(true);
       }
     } else {
       // Signup
@@ -69,7 +75,9 @@ const Auth = () => {
         }
       }
     }
-    setLoading(false);
+    } catch {
+      toast.error("Could not sign in. Check your connection and try again.");
+    } finally { setLoading(false); }
   };
 
   return (
@@ -201,7 +209,7 @@ const Auth = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  minLength={8}
+                  minLength={isLogin ? undefined : 8}
                   className="pr-10 font-sans"
                 />
                 <button
@@ -226,10 +234,10 @@ const Auth = () => {
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || loginSucceeded}
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-sans tracking-wide py-5"
             >
-              {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
+              {loading || loginSucceeded ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
             </Button>
           </form>
 
