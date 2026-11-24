@@ -17,7 +17,7 @@ import {
 import { NavLink } from "@/components/NavLink";
 import {
   LayoutDashboard, ShoppingCart, Receipt, BedDouble, UtensilsCrossed,
-  Settings, Users, Tag, ChefHat, Wine, LogOut, BarChart3, CalendarDays, ShieldCheck, History, Palette
+  Settings, Users, Tag, ChefHat, Wine, LogOut, BarChart3, CalendarDays, ShieldCheck, ShieldAlert, History, Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +36,7 @@ import AdminSecurity from "@/components/admin/AdminSecurity";
 import AdminAuditLog from "@/components/admin/AdminAuditLog";
 import AdminSiteContent from "@/components/admin/AdminSiteContent";
 import AdminStaff from "@/components/admin/AdminStaff";
+import AdminLogin from "@/components/admin/AdminLogin";
 import { useStaffRole, ROLE_LABELS } from "@/hooks/useStaffRole";
 
 const tabs = [
@@ -68,11 +69,6 @@ const AdminDashboard = () => {
   const requestedTab = searchParams.get("tab") || "";
   const activeTab = requestedTab && can(requestedTab) ? requestedTab : fallbackTab;
 
-  useEffect(() => {
-    if (!authLoading && !user) { navigate("/auth", { replace: true }); return; }
-    if (!roleLoading && !accessError && user && !role) navigate("/dashboard", { replace: true });
-  }, [user, authLoading, role, roleLoading, accessError, navigate]);
-
   // Real-time pending counts for kitchen & bar
   useEffect(() => {
     if (!user || roleLoading || !role || accessError) return;
@@ -96,14 +92,51 @@ const AdminDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id, roleLoading, role, accessError]);
 
-  if (authLoading || roleLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+  if (authLoading) return (
+    <div role="status" className="min-h-[100svh] flex flex-col items-center justify-center gap-3 bg-background">
       <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <span className="text-sm text-muted-foreground">Loading your account…</span>
     </div>
   );
 
-  if (accessError) return <div role="alert" className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background p-6"><p className="text-destructive">{accessError}</p><Button onClick={retry}>Try again</Button><Button variant="outline" onClick={() => navigate("/dashboard")}>My account</Button></div>;
-  if (!role) return null;
+  if (!user) return <AdminLogin />;
+
+  if (roleLoading) return (
+    <div role="status" className="min-h-[100svh] flex flex-col items-center justify-center gap-3 bg-background">
+      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <span className="text-sm text-muted-foreground">Checking your staff role and page access…</span>
+    </div>
+  );
+
+  if (accessError) return (
+    <div className="min-h-[100svh] flex items-center justify-center bg-background p-6">
+      <div role="alert" className="w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-luxury">
+        <ShieldAlert className="mx-auto mb-4 h-10 w-10 text-destructive" aria-hidden="true" />
+        <h1 className="font-serif text-2xl">We could not check your access</h1>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{accessError} Your account has not been changed.</p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Button onClick={retry}>Try again</Button>
+          <Button variant="outline" onClick={() => void signOut()}>Sign out</Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!role) return (
+    <div className="min-h-[100svh] flex items-center justify-center bg-background p-6">
+      <div role="alert" className="w-full max-w-md rounded-xl border border-border bg-card p-8 text-center shadow-luxury">
+        <ShieldAlert className="mx-auto mb-4 h-10 w-10 text-primary" aria-hidden="true" />
+        <h1 className="font-serif text-2xl">Staff access required</h1>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          {user.email || "This account"} is signed in, but it has no staff role. Ask an administrator to assign your role in Staff &amp; Roles.
+        </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Button onClick={() => navigate("/dashboard")}>My guest account</Button>
+          <Button variant="outline" onClick={() => void signOut()}>Sign out</Button>
+        </div>
+      </div>
+    </div>
+  );
 
   const setTab = (key: string) => setSearchParams({ tab: key });
 
@@ -199,6 +232,13 @@ const AdminDashboard = () => {
           <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border h-14 flex items-center px-6 gap-4">
             <SidebarTrigger />
             <h1 className="font-serif text-lg font-semibold text-foreground">{tabs.find((t) => t.key === activeTab)?.label}</h1>
+            <div className="ml-auto flex items-center gap-3">
+              <span className="hidden max-w-56 truncate text-xs text-muted-foreground md:block">{user.email}</span>
+              <Badge variant="outline" className="gap-1.5 border-primary/30 bg-primary/10 text-primary">
+                <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                {ROLE_LABELS[role]}
+              </Badge>
+            </div>
           </header>
           <div className="p-3 sm:p-6">
             {renderContent()}

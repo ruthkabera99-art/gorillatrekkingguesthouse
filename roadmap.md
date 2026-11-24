@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Build and verify the dedicated Admin Panel sign-in and access feedback
 - [ ] Repair administrator access and permission loading
 - [ ] Align Staff & Roles and Settings account management, with safe errors and retries
 - [ ] Verify administrator website saves and shared control access
